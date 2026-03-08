@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import AppHeader from '@/components/AppHeader';
 import FileUploader from '@/components/FileUploader';
 import AddBudgetForm from '@/components/AddBudgetForm';
@@ -9,6 +10,12 @@ import { toast } from 'sonner';
 
 export default function ManagePage() {
   const budget = useBudget();
+
+  const existingGroups = useMemo(() => {
+    const groups = new Set<string>();
+    budget.items.forEach(item => { if (item.group) groups.add(item.group); });
+    return Array.from(groups);
+  }, [budget.items]);
 
   const handleClearAll = () => {
     if (confirm('모든 데이터를 삭제하시겠습니까?')) {
@@ -35,7 +42,7 @@ export default function ManagePage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <FileUploader onDataLoaded={budget.loadItems} />
-          <AddBudgetForm onAdd={budget.addItem} />
+          <AddBudgetForm onAdd={budget.addItem} existingGroups={existingGroups} />
         </div>
 
         <div>
