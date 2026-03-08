@@ -59,7 +59,7 @@ export default function ManagePage() {
 
         <div>
           <h2 className="text-sm sm:text-base font-semibold text-foreground mb-3">현재 데이터 ({budget.items.length}건)</h2>
-          <BudgetTable items={budget.items} editable onUpdate={budget.updateItem} onDelete={budget.deleteItem} onDeleteGroup={budget.deleteGroup} />
+          <BudgetTable items={budget.items} editable onUpdate={budget.updateItem} onDelete={budget.deleteItem} onDeleteGroup={budget.deleteGroup} onReorder={budget.reorderItems} />
         </div>
       </main>
       <AppFooter />
