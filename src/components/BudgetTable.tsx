@@ -3,7 +3,7 @@ import { BudgetItem, GROUP_COLORS } from '@/lib/budget-types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Trash2, Pencil, Check, X, ChevronDown, ChevronRight, Ungroup, FolderPlus } from 'lucide-react';
+import { Trash2, Pencil, Check, X, ChevronDown, ChevronRight, Ungroup, FolderPlus, GripVertical } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Select,
@@ -22,6 +22,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 function formatKRW(n: number) {
   return n.toLocaleString('ko-KR');
@@ -33,6 +50,7 @@ interface Props {
   onUpdate?: (id: string, updated: Partial<BudgetItem>) => void;
   onDelete?: (id: string) => void;
   onDeleteGroup?: (groupName: string) => void;
+  onReorder?: (newItems: BudgetItem[]) => void;
 }
 
 interface EditForm {
