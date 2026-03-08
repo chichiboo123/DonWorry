@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import AppHeader from '@/components/AppHeader';
+import AppFooter from '@/components/AppFooter';
 import FileUploader from '@/components/FileUploader';
 import AddBudgetForm from '@/components/AddBudgetForm';
 import BudgetTable from '@/components/BudgetTable';
@@ -25,9 +26,9 @@ export default function ManagePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <AppHeader theme={budget.theme} onThemeChange={budget.setTheme} />
-      <main className="container mx-auto px-4 py-6 space-y-6">
+      <main className="container mx-auto px-4 py-6 space-y-6 flex-1">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">예산 관리</h1>
@@ -72,6 +73,7 @@ export default function ManagePage() {
           <BudgetTable items={budget.items} editable onUpdate={budget.updateItem} onDelete={budget.deleteItem} />
         </div>
       </main>
+      <AppFooter />
     </div>
   );
 }
