@@ -6,7 +6,8 @@ import AddBudgetForm from '@/components/AddBudgetForm';
 import BudgetTable from '@/components/BudgetTable';
 import { useBudget } from '@/hooks/use-budget';
 import { Button } from '@/components/ui/button';
-import { Trash2, Undo2, Redo2, Upload } from 'lucide-react';
+import { Trash2, Undo2, Redo2, FolderUp } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
