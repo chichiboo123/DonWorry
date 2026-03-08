@@ -214,6 +214,6 @@ export function useBudget() {
   return {
     items, theme, setTheme, loadItems, addItem, updateItem, deleteItem, deleteGroup,
     summary, undo, redo, canUndo, canRedo,
-    dataMode, setDataMode, syncing, refreshFromOnline,
+    dataMode, setDataMode, syncing, refreshFromOnline, pushToOnline,
   };
 }
