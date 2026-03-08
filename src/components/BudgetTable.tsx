@@ -563,5 +563,20 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
         </div>
       )}
     </div>
+
+      <AlertDialog open={!!ungroupItem} onOpenChange={(open) => !open && setUngroupItem(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>그룹 해제</AlertDialogTitle>
+            <AlertDialogDescription>
+              '{ungroupItem?.description}' 항목을 그룹에서 해제하시겠습니까?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemoveFromGroup}>해제</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
-}
