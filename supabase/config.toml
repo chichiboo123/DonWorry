@@ -1,1 +1,4 @@
 project_id = "dkduyualoomvwuucioes"
+
+[functions.gas-proxy]
+verify_jwt = false
