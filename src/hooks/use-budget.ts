@@ -168,6 +168,12 @@ export function useBudget() {
     syncToOnline(newItems);
   }, [items, pushHistory, applyItems, syncToOnline]);
 
+  const reorderItems = useCallback((newItems: BudgetItem[]) => {
+    pushHistory(items);
+    applyItems(newItems);
+    syncToOnline(newItems);
+  }, [items, pushHistory, applyItems, syncToOnline]);
+
   // 로컬 데이터를 온라인 스프레드시트에 업로드 (최초 동기화용)
   const pushToOnline = useCallback(async () => {
     const scriptUrl = gas.getScriptUrl();
