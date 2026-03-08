@@ -3,9 +3,15 @@ import { BudgetItem, GROUP_COLORS } from '@/lib/budget-types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Trash2, Pencil, Check, X, Plus, ChevronDown, ChevronRight, Ungroup } from 'lucide-react';
+import { Trash2, Pencil, Check, X, ChevronDown, ChevronRight, Ungroup, FolderPlus } from 'lucide-react';
 import { toast } from 'sonner';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 function formatKRW(n: number) {
   return n.toLocaleString('ko-KR');
@@ -32,6 +38,8 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
   const [addingId, setAddingId] = useState<string | null>(null);
   const [addAmount, setAddAmount] = useState('');
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [assigningGroupId, setAssigningGroupId] = useState<string | null>(null);
+  const [newGroupName, setNewGroupName] = useState('');
 
   // Group items
   const groupedItems = useMemo(() => {
@@ -69,6 +77,7 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
       executedAmount: String(item.executedAmount),
     });
     setAddingId(null);
+    setAssigningGroupId(null);
   };
 
   const saveEdit = (item: BudgetItem) => {
@@ -95,6 +104,7 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
     setAddingId(item.id);
     setAddAmount('');
     setEditingId(null);
+    setAssigningGroupId(null);
   };
 
   const saveAddExecution = (item: BudgetItem) => {
@@ -124,6 +134,22 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
     toast.success('그룹에서 해제되었습니다.');
   };
 
+  const handleAssignGroup = (item: BudgetItem, groupName: string) => {
+    if (groupName === '__new__') return;
+    onUpdate?.(item.id, { group: groupName, subCategory: groupName });
+    setAssigningGroupId(null);
+    toast.success(`"${groupName}" 그룹에 추가되었습니다.`);
+  };
+
+  const handleCreateAndAssignGroup = (item: BudgetItem) => {
+    if (!newGroupName.trim()) { toast.error('그룹 이름을 입력해주세요.'); return; }
+    const name = newGroupName.trim();
+    onUpdate?.(item.id, { group: name, subCategory: name });
+    setAssigningGroupId(null);
+    setNewGroupName('');
+    toast.success(`"${name}" 그룹이 생성되고 항목이 추가되었습니다.`);
+  };
+
   const toggleGroup = (groupName: string) => {
     setCollapsedGroups(prev => {
       const next = new Set(prev);
@@ -149,6 +175,7 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
   const renderRow = (item: BudgetItem, colorStyle?: { bg: string }) => {
     const isEditing = editingId === item.id;
     const isAdding = addingId === item.id;
+    const isAssigningGroup = assigningGroupId === item.id;
 
     if (isEditing) {
       return (
@@ -180,6 +207,47 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
               </Button>
             </div>
           </TableCell>
+        </TableRow>
+      );
+    }
+
+    // Group assignment row
+    if (isAssigningGroup) {
+      return (
+        <TableRow key={item.id} className="bg-primary/5">
+          <TableCell colSpan={7}>
+            <div className="flex items-center gap-3 py-1">
+              <span className="text-sm font-medium text-foreground whitespace-nowrap">"{item.description}" 그룹 지정:</span>
+              {groupNames.length > 0 && (
+                <Select onValueChange={(val) => handleAssignGroup(item, val)}>
+                  <SelectTrigger className="w-48 h-8 text-sm">
+                    <SelectValue placeholder="기존 그룹 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {groupNames.map(g => {
+                      const clean = g.replace(/^\[초\]/, '').replace(/^\[초］/, '').replace(/^［초\]/, '').replace(/^［초］/, '');
+                      return <SelectItem key={g} value={g}>{clean}</SelectItem>;
+                    })}
+                  </SelectContent>
+                </Select>
+              )}
+              <span className="text-sm text-muted-foreground">또는</span>
+              <Input
+                className="w-40 h-8 text-sm"
+                placeholder="새 그룹 이름"
+                value={newGroupName}
+                onChange={e => setNewGroupName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleCreateAndAssignGroup(item)}
+              />
+              <Button size="sm" variant="outline" className="h-8 text-sm" onClick={() => handleCreateAndAssignGroup(item)}>
+                생성
+              </Button>
+              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setAssigningGroupId(null); setNewGroupName(''); }}>
+                <X className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          </TableCell>
+          <TableCell />
         </TableRow>
       );
     }
@@ -235,6 +303,11 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
               <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => startEdit(item)} title="전체 수정">
                 <Pencil className="w-3.5 h-3.5" />
               </Button>
+              {!item.group && (
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setAssigningGroupId(item.id); setEditingId(null); setAddingId(null); }} title="그룹 지정">
+                  <FolderPlus className="w-3.5 h-3.5" />
+                </Button>
+              )}
               {item.group && (
                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleRemoveFromGroup(item)} title="그룹 해제">
                   <Ungroup className="w-3.5 h-3.5" />
@@ -260,7 +333,7 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
         <TableHead className="text-right font-semibold text-foreground">집행액</TableHead>
         <TableHead className="text-right font-semibold text-foreground">집행률</TableHead>
         <TableHead className="text-right font-semibold text-foreground">잔액</TableHead>
-        {editable && <TableHead className="w-28"></TableHead>}
+        {editable && <TableHead className="w-32"></TableHead>}
       </TableRow>
     </TableHeader>
   );
@@ -276,7 +349,6 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
 
         return (
           <div key={groupName} className="rounded-xl overflow-hidden border" style={{ borderColor: `hsl(${color.border})` }}>
-            {/* Group header */}
             <button
               onClick={() => toggleGroup(groupName)}
               className="w-full flex items-center justify-between px-4 py-3 text-left transition-colors hover:opacity-90"
@@ -301,7 +373,6 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
               </div>
             </button>
 
-            {/* Group content */}
             {!isCollapsed && (
               <div className="overflow-x-auto">
                 <Table>
