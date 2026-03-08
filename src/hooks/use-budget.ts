@@ -128,6 +128,30 @@ export function useBudget() {
     syncToOnline(newItems);
   }, [items, pushHistory, applyItems, syncToOnline]);
 
+  // 로컬 데이터를 온라인 스프레드시트에 업로드 (최초 동기화용)
+  const pushToOnline = useCallback(async () => {
+    const scriptUrl = gas.getScriptUrl();
+    if (!scriptUrl) {
+      toast.error('Apps Script URL이 설정되지 않았습니다.');
+      return;
+    }
+    if (items.length === 0) {
+      toast.error('업로드할 데이터가 없습니다.');
+      return;
+    }
+    
+    setSyncing(true);
+    try {
+      await gas.syncOnlineData(scriptUrl, items);
+      toast.success(`${items.length}개 항목을 스프레드시트에 업로드했습니다.`);
+    } catch (err) {
+      toast.error('스프레드시트 업로드에 실패했습니다.');
+      console.error('pushToOnline 실패:', err);
+    } finally {
+      setSyncing(false);
+    }
+  }, [items]);
+
   // 온라인에서 데이터 새로고침
   const refreshFromOnline = useCallback(async () => {
     const scriptUrl = gas.getScriptUrl();
@@ -138,7 +162,7 @@ export function useBudget() {
       const onlineItems = await gas.fetchOnlineData(scriptUrl);
       pushHistory(items);
       applyItems(onlineItems);
-      toast.success('온라인 데이터를 불러왔습니다.');
+      toast.success(`온라인 데이터를 불러왔습니다. (${onlineItems.length}개 항목)`);
     } catch (err) {
       toast.error('온라인 데이터 불러오기에 실패했습니다.');
     } finally {
