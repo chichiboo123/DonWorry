@@ -1,4 +1,5 @@
 import { BudgetItem } from './budget-types';
+import { supabase } from '@/integrations/supabase/client';
 
 const STORAGE_KEY_SCRIPT_URL = 'donworry_script_url';
 const STORAGE_KEY_MODE = 'donworry_mode';
@@ -21,72 +22,41 @@ export function setScriptUrl(url: string) {
   localStorage.setItem(STORAGE_KEY_SCRIPT_URL, url);
 }
 
-/** GAS fetch 헬퍼 - 리다이렉트 및 CORS 처리 */
-async function gasFetch(url: string, options?: RequestInit): Promise<any> {
-  try {
-    const res = await fetch(url, {
-      ...options,
-      redirect: 'follow',
-    });
+/** Edge Function 프록시를 통해 GAS 호출 */
+async function callGasProxy(scriptUrl: string, action: string, payload?: object): Promise<any> {
+  const { data, error } = await supabase.functions.invoke('gas-proxy', {
+    body: { scriptUrl, action, payload },
+  });
 
-    if (!res.ok) {
-      console.error('GAS 응답 오류:', res.status, res.statusText);
-      throw new Error(`서버 오류: ${res.status}`);
-    }
-
-    const text = await res.text();
-    console.log('GAS 응답:', text.substring(0, 200));
-
-    try {
-      return JSON.parse(text);
-    } catch {
-      console.error('JSON 파싱 실패:', text.substring(0, 500));
-      throw new Error('응답을 파싱할 수 없습니다.');
-    }
-  } catch (err: any) {
-    console.error('GAS fetch 실패:', err.message, 'URL:', url.substring(0, 80));
-
-    // CORS/네트워크 오류시 no-cors 모드로 재시도 (POST만, 쓰기 작업)
-    if (err.message === 'Failed to fetch' && options?.method === 'POST') {
-      console.log('no-cors 모드로 POST 재시도...');
-      await fetch(url, {
-        ...options,
-        mode: 'no-cors',
-        redirect: 'follow',
-      });
-      return { success: true, noCorsFallback: true };
-    }
-
-    throw err;
+  if (error) {
+    console.error('GAS proxy 오류:', error);
+    throw new Error(error.message || 'GAS 프록시 호출 실패');
   }
+
+  if (data?.error) {
+    throw new Error(data.error);
+  }
+
+  return data;
 }
 
 /** 온라인: 스프레드시트에서 데이터 읽기 */
 export async function fetchOnlineData(scriptUrl: string): Promise<BudgetItem[]> {
-  const data = await gasFetch(`${scriptUrl}?action=read`);
+  const data = await callGasProxy(scriptUrl, 'read');
   return data.items || [];
 }
 
 /** 온라인: 전체 데이터 저장 (동기화) */
 export async function syncOnlineData(scriptUrl: string, items: BudgetItem[]): Promise<void> {
-  await gasFetch(scriptUrl, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'sync', items }),
-  });
+  await callGasProxy(scriptUrl, 'sync', { action: 'sync', items });
 }
 
 /** 온라인: 항목 수정 */
 export async function updateOnlineItem(scriptUrl: string, item: BudgetItem): Promise<void> {
-  await gasFetch(scriptUrl, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'update', item }),
-  });
+  await callGasProxy(scriptUrl, 'update', { action: 'update', item });
 }
 
 /** 온라인: 항목 삭제 */
 export async function deleteOnlineItem(scriptUrl: string, id: string): Promise<void> {
-  await gasFetch(scriptUrl, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'delete', id }),
-  });
+  await callGasProxy(scriptUrl, 'delete', { action: 'delete', id });
 }
