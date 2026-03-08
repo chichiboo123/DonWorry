@@ -23,8 +23,8 @@ export default function ManagePage() {
       <main className="container mx-auto px-4 py-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">예산 관리</h1>
-            <p className="text-sm text-muted-foreground">데이터를 업로드하거나 항목을 추가/수정하세요</p>
+            <h1 className="text-3xl font-bold text-foreground">예산 관리</h1>
+            <p className="text-sm text-muted-foreground mt-1">데이터를 업로드하거나 항목을 추가/수정하세요</p>
           </div>
           {budget.items.length > 0 && (
             <Button variant="outline" size="sm" onClick={handleClearAll} className="gap-1 text-destructive hover:text-destructive">
@@ -39,8 +39,8 @@ export default function ManagePage() {
         </div>
 
         <div>
-          <h2 className="text-lg font-semibold text-foreground mb-3">현재 데이터 ({budget.items.length}건)</h2>
-          <BudgetTable items={budget.items} />
+          <h2 className="text-xl font-semibold text-foreground mb-3">현재 데이터 ({budget.items.length}건)</h2>
+          <BudgetTable items={budget.items} editable onUpdate={budget.updateItem} onDelete={budget.deleteItem} />
         </div>
       </main>
     </div>
