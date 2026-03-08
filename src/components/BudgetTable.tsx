@@ -268,7 +268,6 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
               <div className="flex items-center gap-1 justify-end">
                 <span className="text-xs">{formatKRW(item.executedAmount)}</span>
                 <button className="text-[9px] text-primary underline" onClick={() => startAddExecution(item)}>추가</button>
-                <button className="text-[9px] text-muted-foreground underline" onClick={() => startDirectEditExecution(item)}>수정</button>
               </div>
             ) : (
               <span>{formatKRW(item.executedAmount)}</span>
