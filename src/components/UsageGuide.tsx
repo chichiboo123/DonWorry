@@ -30,7 +30,7 @@ export default function UsageGuide() {
             <section>
               <h3 className="text-base font-bold text-foreground mb-2">💰 돈 워리(Don Worry)란?</h3>
               <p className="text-muted-foreground">
-                초등 교사를 위한 학교 예산 관리 플랫폼입니다. 에듀파인에서 다운로드한 세출예산 데이터를 쉽게 시각화하고 관리할 수 있습니다.
+                모든 교사를 위한 학교 예산 관리 플랫폼입니다. 에듀파인에서 다운로드한 세출예산 데이터를 쉽게 시각화하고 관리할 수 있습니다.
               </p>
             </section>
 
