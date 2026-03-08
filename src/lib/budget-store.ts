@@ -54,3 +54,7 @@ export function isSetupDone(): boolean {
 export function markSetupDone() {
   localStorage.setItem(STORAGE_KEYS.SETUP_DONE, 'true');
 }
+
+export function clearSetup() {
+  localStorage.removeItem(STORAGE_KEYS.SETUP_DONE);
+}
