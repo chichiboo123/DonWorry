@@ -28,6 +28,7 @@ export default function AppHeader({ theme, onThemeChange }: Props) {
         </button>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <UsageGuide />
           <ThemeSwitcher current={theme} onChange={onThemeChange} />
           <nav className="flex items-center gap-0.5 sm:gap-1">
             <button
