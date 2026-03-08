@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { BudgetItem, BudgetSummary } from '@/lib/budget-types';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Sector } from 'recharts';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const COLORS = [
@@ -19,10 +19,10 @@ interface Props {
 
 export default function BudgetChart({ summary, items = [] }: Props) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
 
   const data = summary.categoryBreakdown.map(c => ({
-    name: c.name.length > 10 ? c.name.slice(0, 10) + '…' : c.name,
-    fullName: c.name,
+    name: c.name,
     value: c.budget,
     executed: c.executed,
     remaining: c.remaining,
@@ -30,10 +30,8 @@ export default function BudgetChart({ summary, items = [] }: Props) {
 
   if (data.length === 0) return null;
 
-  const handlePieClick = (dataItem: any) => {
-    if (dataItem?.fullName) {
-      setSelectedCategory(dataItem.fullName);
-    }
+  const handlePieClick = (_: any, idx: number) => {
+    setSelectedCategory(data[idx]?.name || null);
   };
 
   const categoryItems = selectedCategory
@@ -44,12 +42,37 @@ export default function BudgetChart({ summary, items = [] }: Props) {
     ? summary.categoryBreakdown.find(c => c.name === selectedCategory)
     : null;
 
-  const renderCustomLabel = ({ name, percent, x, y, midAngle }: any) => {
-    if (percent < 0.05) return null;
+  const total = data.reduce((s, d) => s + d.value, 0);
+
+  // Legend below chart
+  const legendItems = data.map((d, i) => ({
+    name: d.name,
+    color: COLORS[i % COLORS.length],
+    percent: total > 0 ? ((d.value / total) * 100).toFixed(1) : '0',
+    value: d.value,
+  }));
+
+  const renderActiveShape = (props: any) => {
+    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent } = props;
     return (
-      <text x={x} y={y} fill="hsl(220,15%,40%)" textAnchor={midAngle > 180 ? 'end' : 'start'} dominantBaseline="central" fontSize={11}>
-        {name} {(percent * 100).toFixed(0)}%
-      </text>
+      <g>
+        <Sector
+          cx={cx}
+          cy={cy}
+          innerRadius={innerRadius}
+          outerRadius={outerRadius + 6}
+          startAngle={startAngle}
+          endAngle={endAngle}
+          fill={fill}
+          fillOpacity={1}
+        />
+        <text x={cx} y={cy - 8} textAnchor="middle" fill="hsl(220,25%,20%)" fontSize={13} fontWeight="bold">
+          {payload.name.length > 8 ? payload.name.slice(0, 8) + '…' : payload.name}
+        </text>
+        <text x={cx} y={cy + 12} textAnchor="middle" fill="hsl(220,15%,50%)" fontSize={11}>
+          {(percent * 100).toFixed(1)}%
+        </text>
+      </g>
     );
   };
 
@@ -59,19 +82,21 @@ export default function BudgetChart({ summary, items = [] }: Props) {
         <h3 className="text-sm sm:text-base font-semibold text-foreground mb-1">사업별 예산 현황</h3>
         <p className="text-[10px] sm:text-xs text-muted-foreground mb-3">영역을 클릭하면 상세 정보를 볼 수 있습니다</p>
         <div className="flex-1 min-h-0">
-          <ResponsiveContainer width="100%" height={260}>
+          <ResponsiveContainer width="100%" height={220}>
             <PieChart>
               <Pie
                 data={data}
                 cx="50%"
                 cy="50%"
-                labelLine={true}
-                label={renderCustomLabel}
-                outerRadius={90}
-                innerRadius={40}
+                outerRadius={85}
+                innerRadius={45}
                 dataKey="value"
                 cursor="pointer"
                 onClick={handlePieClick}
+                onMouseEnter={(_, idx) => setActiveIndex(idx)}
+                onMouseLeave={() => setActiveIndex(undefined)}
+                activeIndex={activeIndex}
+                activeShape={renderActiveShape}
                 strokeWidth={2}
                 stroke="hsl(0,0%,100%)"
               >
@@ -79,12 +104,18 @@ export default function BudgetChart({ summary, items = [] }: Props) {
                   <Cell key={i} fill={COLORS[i % COLORS.length]} fillOpacity={0.85} />
                 ))}
               </Pie>
-              <Tooltip
-                formatter={(value: number) => formatKRW(value)}
-                contentStyle={{ borderRadius: '8px', border: '1px solid hsl(210,25%,88%)', fontSize: '12px' }}
-              />
             </PieChart>
           </ResponsiveContainer>
+        </div>
+        {/* Legend */}
+        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 justify-center">
+          {legendItems.map((item, i) => (
+            <div key={i} className="flex items-center gap-1.5 text-xs text-foreground">
+              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+              <span className="truncate max-w-[120px]">{item.name}</span>
+              <span className="text-muted-foreground">{item.percent}%</span>
+            </div>
+          ))}
         </div>
       </div>
 
