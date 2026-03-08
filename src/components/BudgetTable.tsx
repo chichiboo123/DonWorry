@@ -472,6 +472,7 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
   );
 
   return (
+    <>
     <div className="space-y-4">
       {/* Grouped items */}
       {Array.from(groupedItems.groups.entries()).map(([groupName, groupItems]) => {
