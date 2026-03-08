@@ -8,7 +8,7 @@ import { useBudget } from '@/hooks/use-budget';
 import { isSetupDone, clearSetup } from '@/lib/budget-store';
 import SetupPage from './SetupPage';
 import { useState } from 'react';
-import { LayoutGrid, Table as TableIcon, RotateCcw, RefreshCw, Globe, HardDrive, Loader2, Upload, Download, Link } from 'lucide-react';
+import { LayoutGrid, Table as TableIcon, RotateCcw, RefreshCw, Globe, HardDrive, Loader2, Upload, Download, Link, ArrowUpDown } from 'lucide-react';
 import { DataMode, getScriptUrl, setScriptUrl, setDataMode as setGasDataMode } from '@/lib/google-apps-script';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ export default function Dashboard() {
   const [compactView, setCompactView] = useState(false);
   const [showOnlineConnect, setShowOnlineConnect] = useState(false);
   const [scriptUrlInput, setScriptUrlInput] = useState(getScriptUrl());
+  const [showSyncMenu, setShowSyncMenu] = useState(false);
 
   if (!setupDone) {
     return (
@@ -57,8 +58,12 @@ export default function Dashboard() {
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             {budget.dataMode === 'online' ? (
               <>
-                <Globe className="w-3.5 h-3.5 text-green-500" />
-                <span>온라인 모드</span>
+                {/* 자동동기화 상태 표시 */}
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                </span>
+                <span className="text-green-600 font-medium">자동 동기화 중</span>
                 {budget.syncing && <Loader2 className="w-3 h-3 animate-spin" />}
                 <button
                   onClick={handleSwitchToLocal}
@@ -80,30 +85,40 @@ export default function Dashboard() {
               </>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            {budget.dataMode === 'online' && (
-              <>
-                <button
-                  onClick={budget.pushToOnline}
-                  disabled={budget.syncing || budget.items.length === 0}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors disabled:opacity-50"
-                  title="현재 데이터를 스프레드시트에 업로드"
-                >
-                  <Upload className="w-3.5 h-3.5" />
-                  업로드
-                </button>
-                <button
-                  onClick={budget.refreshFromOnline}
-                  disabled={budget.syncing}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors disabled:opacity-50"
-                  title="스프레드시트에서 최신 데이터 불러오기"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  다운로드
-                </button>
-              </>
-            )}
-          </div>
+          {/* 수동 동기화 버튼 */}
+          {budget.dataMode === 'online' && (
+            <div className="relative">
+              <button
+                onClick={() => setShowSyncMenu(!showSyncMenu)}
+                disabled={budget.syncing}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors disabled:opacity-50"
+              >
+                <ArrowUpDown className="w-3.5 h-3.5" />
+                수동 동기화
+              </button>
+              {showSyncMenu && (
+                <div className="absolute right-0 top-full mt-1 bg-card border border-border rounded-lg shadow-lg z-10 overflow-hidden min-w-[160px]">
+                  <button
+                    onClick={() => { budget.pushToOnline(); setShowSyncMenu(false); }}
+                    disabled={budget.syncing || budget.items.length === 0}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-foreground hover:bg-muted/50 transition-colors disabled:opacity-50"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    스프레드시트에 업로드
+                  </button>
+                  <div className="h-px bg-border" />
+                  <button
+                    onClick={() => { budget.refreshFromOnline(); setShowSyncMenu(false); }}
+                    disabled={budget.syncing}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-foreground hover:bg-muted/50 transition-colors disabled:opacity-50"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    스프레드시트에서 다운로드
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* 온라인 연결 패널 */}
