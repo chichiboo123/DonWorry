@@ -248,13 +248,30 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
                   <X className="w-3 h-3" />
                 </Button>
               </div>
+            ) : directEditId === item.id ? (
+              <div className="flex items-center gap-1 justify-end">
+                <Input
+                  className="w-24 h-6 text-right text-xs"
+                  value={directEditAmount}
+                  onChange={e => setDirectEditAmount(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && saveDirectEditExecution(item)}
+                  autoFocus
+                />
+                <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => saveDirectEditExecution(item)}>
+                  <Check className="w-3 h-3 text-primary" />
+                </Button>
+                <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => setDirectEditId(null)}>
+                  <X className="w-3 h-3" />
+                </Button>
+              </div>
+            ) : editable ? (
+              <div className="flex items-center gap-1 justify-end">
+                <span className="text-xs">{formatKRW(item.executedAmount)}</span>
+                <button className="text-[9px] text-primary underline" onClick={() => startAddExecution(item)}>추가</button>
+                <button className="text-[9px] text-muted-foreground underline" onClick={() => startDirectEditExecution(item)}>수정</button>
+              </div>
             ) : (
-              <span
-                className={editable ? 'cursor-pointer hover:text-primary underline decoration-dotted underline-offset-2' : ''}
-                onClick={() => editable && startAddExecution(item)}
-              >
-                {formatKRW(item.executedAmount)}
-              </span>
+              <span>{formatKRW(item.executedAmount)}</span>
             )}
           </span>
           <span className="text-muted-foreground">잔액</span>
