@@ -1,3 +1,4 @@
+/* refreshed */
 import { useMemo, useState } from 'react';
 import AppHeader from '@/components/AppHeader';
 import AppFooter from '@/components/AppFooter';
