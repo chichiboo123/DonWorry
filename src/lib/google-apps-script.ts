@@ -23,38 +23,34 @@ export function setScriptUrl(url: string) {
 
 /** 온라인: 스프레드시트에서 데이터 읽기 */
 export async function fetchOnlineData(scriptUrl: string): Promise<BudgetItem[]> {
-  const res = await fetch(`${scriptUrl}?action=read`);
+  const res = await fetch(`${scriptUrl}?action=read`, { redirect: 'follow' });
   if (!res.ok) throw new Error(`서버 오류: ${res.status}`);
   const data = await res.json();
   return data.items || [];
 }
 
-/** 온라인: 전체 데이터 저장 (동기화) */
-export async function syncOnlineData(scriptUrl: string, items: BudgetItem[]): Promise<void> {
+/** GAS POST 헬퍼 (preflight 방지) */
+async function gasPost(scriptUrl: string, payload: object): Promise<Response> {
   const res = await fetch(scriptUrl, {
     method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({ action: 'sync', items }),
+    redirect: 'follow',
+    body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error(`동기화 실패: ${res.status}`);
+  if (!res.ok) throw new Error(`요청 실패: ${res.status}`);
+  return res;
+}
+
+/** 온라인: 전체 데이터 저장 (동기화) */
+export async function syncOnlineData(scriptUrl: string, items: BudgetItem[]): Promise<void> {
+  await gasPost(scriptUrl, { action: 'sync', items });
 }
 
 /** 온라인: 항목 수정 */
 export async function updateOnlineItem(scriptUrl: string, item: BudgetItem): Promise<void> {
-  const res = await fetch(scriptUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({ action: 'update', item }),
-  });
-  if (!res.ok) throw new Error(`수정 실패: ${res.status}`);
+  await gasPost(scriptUrl, { action: 'update', item });
 }
 
 /** 온라인: 항목 삭제 */
 export async function deleteOnlineItem(scriptUrl: string, id: string): Promise<void> {
-  const res = await fetch(scriptUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({ action: 'delete', id }),
-  });
-  if (!res.ok) throw new Error(`삭제 실패: ${res.status}`);
+  await gasPost(scriptUrl, { action: 'delete', id });
 }
