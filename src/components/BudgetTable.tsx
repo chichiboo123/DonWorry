@@ -506,7 +506,7 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
                   <Table>
                     {tableHeader}
                     <TableBody>
-                      {groupItems.map(item => renderRow(item, { bg: color.bg }))}
+                      {groupItems.map(item => renderRow(item))}
                     </TableBody>
                   </Table>
                 </div>
