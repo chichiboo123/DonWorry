@@ -95,6 +95,8 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
 
   const groupNames = useMemo(() => Array.from(groupedItems.groups.keys()), [groupedItems]);
 
+  const hasDrag = editable && !!onReorder;
+
   if (items.length === 0) {
     return (
       <div className="glass-card rounded-xl p-6 sm:p-8 text-center text-muted-foreground text-sm">
@@ -188,7 +190,6 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
     }
   };
 
-
   const handleRemoveFromGroup = (item: BudgetItem) => {
     setUngroupItem(item);
   };
@@ -239,59 +240,86 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
     return { budget, executed, remaining, rate };
   };
 
-  // Drag end handler for reordering groups
+  // ── Drag handlers ──
   const handleGroupDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id || !onReorder) return;
-    const groupNamesList = Array.from(groupedItems.groups.keys());
-    const oldIndex = groupNamesList.indexOf(active.id as string);
-    const newIndex = groupNamesList.indexOf(over.id as string);
+    const gNames = Array.from(groupedItems.groups.keys());
+    const oldIndex = gNames.indexOf(active.id as string);
+    const newIndex = gNames.indexOf(over.id as string);
     if (oldIndex === -1 || newIndex === -1) return;
-    const reorderedGroups = arrayMove(groupNamesList, oldIndex, newIndex);
-    // Rebuild items array: groups in new order, then ungrouped
+    const reordered = arrayMove(gNames, oldIndex, newIndex);
     const newItems: BudgetItem[] = [];
-    reorderedGroups.forEach(g => {
-      const gItems = groupedItems.groups.get(g);
-      if (gItems) newItems.push(...gItems);
-    });
+    reordered.forEach(g => { newItems.push(...(groupedItems.groups.get(g) || [])); });
     newItems.push(...groupedItems.ungrouped);
     onReorder(newItems);
   };
 
-  // Drag end handler for reordering items within a group
   const handleItemDragEnd = (groupName: string) => (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id || !onReorder) return;
-    const groupItems = groupedItems.groups.get(groupName) || [];
-    const oldIndex = groupItems.findIndex(i => i.id === active.id);
-    const newIndex = groupItems.findIndex(i => i.id === over.id);
+    const gItems = groupedItems.groups.get(groupName) || [];
+    const oldIndex = gItems.findIndex(i => i.id === active.id);
+    const newIndex = gItems.findIndex(i => i.id === over.id);
     if (oldIndex === -1 || newIndex === -1) return;
-    const reordered = arrayMove(groupItems, oldIndex, newIndex);
-    // Rebuild full items array
+    const reordered = arrayMove(gItems, oldIndex, newIndex);
     const newItems: BudgetItem[] = [];
-    Array.from(groupedItems.groups.entries()).forEach(([g, gItems]) => {
-      newItems.push(...(g === groupName ? reordered : gItems));
+    Array.from(groupedItems.groups.entries()).forEach(([g, gi]) => {
+      newItems.push(...(g === groupName ? reordered : gi));
     });
     newItems.push(...groupedItems.ungrouped);
     onReorder(newItems);
   };
 
-  // Drag end handler for ungrouped items
   const handleUngroupedDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id || !onReorder) return;
-    const ungrouped = groupedItems.ungrouped;
-    const oldIndex = ungrouped.findIndex(i => i.id === active.id);
-    const newIndex = ungrouped.findIndex(i => i.id === over.id);
+    const ug = groupedItems.ungrouped;
+    const oldIndex = ug.findIndex(i => i.id === active.id);
+    const newIndex = ug.findIndex(i => i.id === over.id);
     if (oldIndex === -1 || newIndex === -1) return;
-    const reordered = arrayMove(ungrouped, oldIndex, newIndex);
+    const reordered = arrayMove(ug, oldIndex, newIndex);
     const newItems: BudgetItem[] = [];
-    Array.from(groupedItems.groups.values()).forEach(gItems => newItems.push(...gItems));
+    Array.from(groupedItems.groups.values()).forEach(gi => newItems.push(...gi));
     newItems.push(...reordered);
     onReorder(newItems);
   };
 
-  // Mobile card view for a single item
+  // ── Sortable wrappers ──
+  function SortableGroupWrapper({ groupName, children }: { groupName: string; children: (dragHandleProps: { listeners: any; attributes: any }) => React.ReactNode }) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: groupName });
+    const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+    return (
+      <div ref={setNodeRef} style={style}>
+        {children({ listeners, attributes })}
+      </div>
+    );
+  }
+
+  function SortableItemRow({ item, colorStyle }: { item: BudgetItem; colorStyle?: { bg: string } }) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+    const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+    return (
+      <tr ref={setNodeRef} style={style}>
+        {renderRowCells(item, colorStyle, { listeners, attributes })}
+      </tr>
+    );
+  }
+
+  function SortableMobileItem({ item }: { item: BudgetItem }) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+    const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+    return (
+      <div ref={setNodeRef} style={style} className="flex items-start">
+        <button {...listeners} {...attributes} className="cursor-grab active:cursor-grabbing p-2 pt-3 text-muted-foreground hover:text-foreground touch-none">
+          <GripVertical className="w-4 h-4" />
+        </button>
+        <div className="flex-1">{renderMobileCard(item)}</div>
+      </div>
+    );
+  }
+
+  // ── Mobile card ──
   const renderMobileCard = (item: BudgetItem) => {
     const isAdding = addingId === item.id;
 
@@ -327,36 +355,15 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
           <span className="text-right font-medium">
             {isAdding ? (
               <div className="flex items-center gap-1 justify-end">
-                <Input
-                  className="w-20 h-6 text-right text-xs"
-                  placeholder="추가 금액"
-                  value={addAmount}
-                  onChange={e => setAddAmount(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && saveAddExecution(item)}
-                  autoFocus
-                />
-                <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => saveAddExecution(item)}>
-                  <Check className="w-3 h-3 text-primary" />
-                </Button>
-                <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => setAddingId(null)}>
-                  <X className="w-3 h-3" />
-                </Button>
+                <Input className="w-20 h-6 text-right text-xs" placeholder="추가 금액" value={addAmount} onChange={e => setAddAmount(e.target.value)} onKeyDown={e => e.key === 'Enter' && saveAddExecution(item)} autoFocus />
+                <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => saveAddExecution(item)}><Check className="w-3 h-3 text-primary" /></Button>
+                <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => setAddingId(null)}><X className="w-3 h-3" /></Button>
               </div>
             ) : directEditId === item.id ? (
               <div className="flex items-center gap-1 justify-end">
-                <Input
-                  className="w-24 h-6 text-right text-xs"
-                  value={directEditAmount}
-                  onChange={e => setDirectEditAmount(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && saveDirectEditExecution(item)}
-                  autoFocus
-                />
-                <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => saveDirectEditExecution(item)}>
-                  <Check className="w-3 h-3 text-primary" />
-                </Button>
-                <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => setDirectEditId(null)}>
-                  <X className="w-3 h-3" />
-                </Button>
+                <Input className="w-24 h-6 text-right text-xs" value={directEditAmount} onChange={e => setDirectEditAmount(e.target.value)} onKeyDown={e => e.key === 'Enter' && saveDirectEditExecution(item)} autoFocus />
+                <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => saveDirectEditExecution(item)}><Check className="w-3 h-3 text-primary" /></Button>
+                <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => setDirectEditId(null)}><X className="w-3 h-3" /></Button>
               </div>
             ) : editable ? (
               <div className="flex items-center gap-1 justify-end">
@@ -385,9 +392,7 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
             <span className="text-xs font-medium">그룹 지정</span>
             {groupNames.length > 0 && (
               <Select onValueChange={(val) => handleAssignGroup(item, val)}>
-                <SelectTrigger className="h-7 text-xs">
-                  <SelectValue placeholder="기존 그룹 선택" />
-                </SelectTrigger>
+                <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="기존 그룹 선택" /></SelectTrigger>
                 <SelectContent>
                   {groupNames.map(g => (
                     <SelectItem key={g} value={g}>{g.replace(/^\[초\]/, '').replace(/^\[초］/, '').replace(/^［초\]/, '').replace(/^［초］/, '')}</SelectItem>
@@ -421,14 +426,16 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
     );
   };
 
-  const renderRow = (item: BudgetItem, colorStyle?: { bg: string }) => {
+  // ── Desktop row cells (returned as fragment, used by SortableItemRow) ──
+  const renderRowCells = (item: BudgetItem, colorStyle?: { bg: string }, dragProps?: { listeners: any; attributes: any }) => {
     const isEditing = editingId === item.id;
     const isAdding = addingId === item.id;
     const isAssigningGroup = assigningGroupId === item.id;
 
     if (isEditing) {
       return (
-        <TableRow key={item.id} className="bg-primary/5">
+        <>
+          {hasDrag && <TableCell />}
           <TableCell><Input className="h-7 text-sm" value={editForm.category} onChange={e => setEditForm(f => ({ ...f, category: e.target.value }))} /></TableCell>
           <TableCell><Input className="h-7 text-sm" value={editForm.costType} onChange={e => setEditForm(f => ({ ...f, costType: e.target.value }))} /></TableCell>
           <TableCell><Input className="h-7 text-sm" value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} /></TableCell>
@@ -442,13 +449,14 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
               <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingId(null)}><X className="w-3.5 h-3.5" /></Button>
             </div>
           </TableCell>
-        </TableRow>
+        </>
       );
     }
 
     if (isAssigningGroup) {
       return (
-        <TableRow key={item.id} className="bg-primary/5">
+        <>
+          {hasDrag && <TableCell />}
           <TableCell colSpan={7}>
             <div className="flex items-center gap-3 py-1 flex-wrap">
               <span className="text-sm font-medium text-foreground whitespace-nowrap">"{item.description}" 그룹 지정:</span>
@@ -470,12 +478,19 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
             </div>
           </TableCell>
           <TableCell />
-        </TableRow>
+        </>
       );
     }
 
     return (
-      <TableRow key={item.id} style={colorStyle ? { backgroundColor: `hsl(${colorStyle.bg})` } : undefined}>
+      <>
+        {hasDrag && dragProps ? (
+          <TableCell className="w-8 px-1">
+            <button {...dragProps.listeners} {...dragProps.attributes} className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground hover:text-foreground touch-none">
+              <GripVertical className="w-3.5 h-3.5" />
+            </button>
+          </TableCell>
+        ) : hasDrag ? <TableCell /> : null}
         <TableCell className="text-sm">{item.category}</TableCell>
         <TableCell className="text-sm">{item.costType}</TableCell>
         <TableCell className="text-sm">{item.description}</TableCell>
@@ -527,14 +542,21 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
             </div>
           </TableCell>
         )}
-      </TableRow>
+      </>
     );
   };
+
+  // Legacy renderRow for non-drag contexts (Dashboard read-only)
+  const renderRow = (item: BudgetItem, colorStyle?: { bg: string }) => (
+    <TableRow key={item.id} style={colorStyle ? { backgroundColor: `hsl(${colorStyle.bg})` } : undefined}>
+      {renderRowCells(item, colorStyle)}
+    </TableRow>
+  );
 
   const tableHeader = (
     <TableHeader>
       <TableRow className="bg-primary/5">
-        {editable && onReorder && <TableHead className="w-8"></TableHead>}
+        {hasDrag && <TableHead className="w-8"></TableHead>}
         <TableHead className="font-semibold text-foreground">세부사업</TableHead>
         <TableHead className="font-semibold text-foreground">비목</TableHead>
         <TableHead className="font-semibold text-foreground">산출내역</TableHead>
@@ -547,74 +569,119 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
     </TableHeader>
   );
 
+  // ── Render a single group block ──
+  const renderGroupBlock = (groupName: string, groupItems: BudgetItem[], groupDragProps?: { listeners: any; attributes: any }) => {
+    const color = getGroupColor(groupName);
+    const summary = getGroupSummary(groupItems);
+    const isCollapsed = collapsedGroups.has(groupName);
+    const cleanName = groupName.replace(/^\[초\]/, '').replace(/^\[초］/, '').replace(/^［초\]/, '').replace(/^［초］/, '');
+
+    return (
+      <div key={groupName} className="rounded-xl overflow-hidden border" style={{ borderColor: `hsl(${color.border})` }}>
+        <div
+          className="w-full flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 transition-colors hover:opacity-90"
+          style={{ backgroundColor: `hsl(${color.bg})`, color: `hsl(${color.text})` }}
+        >
+          <div className="flex items-center gap-1 flex-1 min-w-0">
+            {hasDrag && groupDragProps && (
+              <button {...groupDragProps.listeners} {...groupDragProps.attributes} className="cursor-grab active:cursor-grabbing p-1 touch-none opacity-60 hover:opacity-100">
+                <GripVertical className="w-4 h-4" />
+              </button>
+            )}
+            <button onClick={() => toggleGroup(groupName)} className="flex items-center gap-2 text-left flex-1 min-w-0">
+              {isCollapsed ? <ChevronRight className="w-4 h-4 shrink-0" /> : <ChevronDown className="w-4 h-4 shrink-0" />}
+              <span className="font-semibold text-sm sm:text-base truncate">{cleanName}</span>
+              <span className="text-xs opacity-70 shrink-0">({groupItems.length}건)</span>
+            </button>
+          </div>
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            <div className="hidden sm:flex items-center gap-4 text-sm">
+              <span>예산 <strong>{formatKRW(summary.budget)}</strong></span>
+              <span>집행 <strong>{formatKRW(summary.executed)}</strong></span>
+              <span>잔액 <strong>{formatKRW(summary.remaining)}</strong></span>
+            </div>
+            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+              summary.rate > 80 ? 'bg-destructive/10 text-destructive' :
+              summary.rate > 50 ? 'bg-accent/20 text-accent-foreground' :
+              'bg-secondary text-secondary-foreground'
+            }`}>
+              {summary.rate.toFixed(1)}%
+            </span>
+            {editable && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 hover:bg-destructive/10"
+                onClick={(e) => { e.stopPropagation(); handleDeleteGroup(groupName, groupItems.length); }}
+                title="그룹 전체 삭제"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-destructive" />
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {!isCollapsed && (
+          <>
+            {/* Desktop table with item-level drag */}
+            <div className="hidden md:block overflow-x-auto">
+              {hasDrag ? (
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleItemDragEnd(groupName)}>
+                  <SortableContext items={groupItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                    <Table>
+                      {tableHeader}
+                      <TableBody>
+                        {groupItems.map(item => <SortableItemRow key={item.id} item={item} />)}
+                      </TableBody>
+                    </Table>
+                  </SortableContext>
+                </DndContext>
+              ) : (
+                <Table>
+                  {tableHeader}
+                  <TableBody>
+                    {groupItems.map(item => renderRow(item))}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
+            {/* Mobile cards with item-level drag */}
+            <div className="md:hidden">
+              {hasDrag ? (
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleItemDragEnd(groupName)}>
+                  <SortableContext items={groupItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                    {groupItems.map(item => <SortableMobileItem key={item.id} item={item} />)}
+                  </SortableContext>
+                </DndContext>
+              ) : (
+                groupItems.map(renderMobileCard)
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
+
   return (
     <>
     <div className="space-y-4">
-      {/* Grouped items */}
-      {Array.from(groupedItems.groups.entries()).map(([groupName, groupItems]) => {
-        const color = getGroupColor(groupName);
-        const summary = getGroupSummary(groupItems);
-        const isCollapsed = collapsedGroups.has(groupName);
-        const cleanName = groupName.replace(/^\[초\]/, '').replace(/^\[초］/, '').replace(/^［초\]/, '').replace(/^［초］/, '');
-
-        return (
-          <div key={groupName} className="rounded-xl overflow-hidden border" style={{ borderColor: `hsl(${color.border})` }}>
-            <div
-              className="w-full flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 transition-colors hover:opacity-90"
-              style={{ backgroundColor: `hsl(${color.bg})`, color: `hsl(${color.text})` }}
-            >
-              <button onClick={() => toggleGroup(groupName)} className="flex items-center gap-2 text-left flex-1 min-w-0">
-                {isCollapsed ? <ChevronRight className="w-4 h-4 shrink-0" /> : <ChevronDown className="w-4 h-4 shrink-0" />}
-                <span className="font-semibold text-sm sm:text-base truncate">{cleanName}</span>
-                <span className="text-xs opacity-70 shrink-0">({groupItems.length}건)</span>
-              </button>
-              <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-                <div className="hidden sm:flex items-center gap-4 text-sm">
-                  <span>예산 <strong>{formatKRW(summary.budget)}</strong></span>
-                  <span>집행 <strong>{formatKRW(summary.executed)}</strong></span>
-                  <span>잔액 <strong>{formatKRW(summary.remaining)}</strong></span>
-                </div>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                  summary.rate > 80 ? 'bg-destructive/10 text-destructive' :
-                  summary.rate > 50 ? 'bg-accent/20 text-accent-foreground' :
-                  'bg-secondary text-secondary-foreground'
-                }`}>
-                  {summary.rate.toFixed(1)}%
-                </span>
-                {editable && (
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-7 w-7 hover:bg-destructive/10"
-                    onClick={(e) => { e.stopPropagation(); handleDeleteGroup(groupName, groupItems.length); }}
-                    title="그룹 전체 삭제"
-                  >
-                    <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {!isCollapsed && (
-              <>
-                {/* Desktop table */}
-                <div className="hidden md:block overflow-x-auto">
-                  <Table>
-                    {tableHeader}
-                    <TableBody>
-                      {groupItems.map(item => renderRow(item))}
-                    </TableBody>
-                  </Table>
-                </div>
-                {/* Mobile cards */}
-                <div className="md:hidden">
-                  {groupItems.map(renderMobileCard)}
-                </div>
-              </>
-            )}
-          </div>
-        );
-      })}
+      {/* Grouped items - with group-level drag */}
+      {hasDrag ? (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleGroupDragEnd}>
+          <SortableContext items={groupNames} strategy={verticalListSortingStrategy}>
+            {Array.from(groupedItems.groups.entries()).map(([groupName, groupItems]) => (
+              <SortableGroupWrapper key={groupName} groupName={groupName}>
+                {(dragHandleProps) => renderGroupBlock(groupName, groupItems, dragHandleProps)}
+              </SortableGroupWrapper>
+            ))}
+          </SortableContext>
+        </DndContext>
+      ) : (
+        Array.from(groupedItems.groups.entries()).map(([groupName, groupItems]) =>
+          renderGroupBlock(groupName, groupItems)
+        )
+      )}
 
       {/* Ungrouped items */}
       {groupedItems.ungrouped.length > 0 && (
@@ -626,16 +693,37 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
           )}
           {/* Desktop table */}
           <div className="hidden md:block overflow-x-auto">
-            <Table>
-              {tableHeader}
-              <TableBody>
-                {groupedItems.ungrouped.map(item => renderRow(item))}
-              </TableBody>
-            </Table>
+            {hasDrag ? (
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleUngroupedDragEnd}>
+                <SortableContext items={groupedItems.ungrouped.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                  <Table>
+                    {tableHeader}
+                    <TableBody>
+                      {groupedItems.ungrouped.map(item => <SortableItemRow key={item.id} item={item} />)}
+                    </TableBody>
+                  </Table>
+                </SortableContext>
+              </DndContext>
+            ) : (
+              <Table>
+                {tableHeader}
+                <TableBody>
+                  {groupedItems.ungrouped.map(item => renderRow(item))}
+                </TableBody>
+              </Table>
+            )}
           </div>
           {/* Mobile cards */}
           <div className="md:hidden">
-            {groupedItems.ungrouped.map(renderMobileCard)}
+            {hasDrag ? (
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleUngroupedDragEnd}>
+                <SortableContext items={groupedItems.ungrouped.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                  {groupedItems.ungrouped.map(item => <SortableMobileItem key={item.id} item={item} />)}
+                </SortableContext>
+              </DndContext>
+            ) : (
+              groupedItems.ungrouped.map(renderMobileCard)
+            )}
           </div>
         </div>
       )}
