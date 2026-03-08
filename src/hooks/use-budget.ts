@@ -168,6 +168,12 @@ export function useBudget() {
     syncToOnline(newItems);
   }, [items, pushHistory, applyItems, syncToOnline]);
 
+  const reorderItems = useCallback((newItems: BudgetItem[]) => {
+    pushHistory(items);
+    applyItems(newItems);
+    syncToOnline(newItems);
+  }, [items, pushHistory, applyItems, syncToOnline]);
+
   // 로컬 데이터를 온라인 스프레드시트에 업로드 (최초 동기화용)
   const pushToOnline = useCallback(async () => {
     const scriptUrl = gas.getScriptUrl();
@@ -252,7 +258,7 @@ export function useBudget() {
   summary.categoryBreakdown = Array.from(catMap.entries()).map(([name, data]) => ({ name, ...data }));
 
   return {
-    items, theme, setTheme, loadItems, addItem, updateItem, deleteItem, deleteGroup,
+    items, theme, setTheme, loadItems, addItem, updateItem, deleteItem, deleteGroup, reorderItems,
     summary, undo, redo, canUndo, canRedo,
     dataMode, setDataMode, syncing, refreshFromOnline, pushToOnline,
   };
