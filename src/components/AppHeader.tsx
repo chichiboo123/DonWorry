@@ -1,5 +1,6 @@
 import moneyIcon from '@/assets/money-icon.png';
 import ThemeSwitcher from './ThemeSwitcher';
+import UsageGuide from './UsageGuide';
 import { ThemeColor } from '@/lib/budget-types';
 import { Settings } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
