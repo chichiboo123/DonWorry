@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import AppHeader from '@/components/AppHeader';
 import AppFooter from '@/components/AppFooter';
 import FileUploader from '@/components/FileUploader';
@@ -6,11 +6,13 @@ import AddBudgetForm from '@/components/AddBudgetForm';
 import BudgetTable from '@/components/BudgetTable';
 import { useBudget } from '@/hooks/use-budget';
 import { Button } from '@/components/ui/button';
-import { Trash2, Undo2, Redo2 } from 'lucide-react';
+import { Trash2, Undo2, Redo2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 export default function ManagePage() {
   const budget = useBudget();
+  const [importOpen, setImportOpen] = useState(false);
 
   const existingGroups = useMemo(() => {
     const groups = new Set<string>();
@@ -35,6 +37,20 @@ export default function ManagePage() {
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">데이터를 업로드하거나 항목을 추가/수정하세요</p>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+            <Dialog open={importOpen} onOpenChange={setImportOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1 text-xs sm:text-sm h-8">
+                  <Upload className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  <span>데이터 불러오기</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>데이터 불러오기</DialogTitle>
+                </DialogHeader>
+                <FileUploader onDataLoaded={(items) => { budget.loadItems(items); setImportOpen(false); }} />
+              </DialogContent>
+            </Dialog>
             <Button variant="outline" size="sm" onClick={budget.undo} disabled={!budget.canUndo} className="gap-1 text-xs sm:text-sm h-8" title="되돌리기">
               <Undo2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               <span className="hidden sm:inline">되돌리기</span>
@@ -52,10 +68,7 @@ export default function ManagePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          <FileUploader onDataLoaded={budget.loadItems} />
-          <AddBudgetForm onAdd={budget.addItem} existingGroups={existingGroups} />
-        </div>
+        <AddBudgetForm onAdd={budget.addItem} existingGroups={existingGroups} />
 
         <div>
           <h2 className="text-sm sm:text-base font-semibold text-foreground mb-3">현재 데이터 ({budget.items.length}건)</h2>
