@@ -53,6 +53,7 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [assigningGroupId, setAssigningGroupId] = useState<string | null>(null);
   const [newGroupName, setNewGroupName] = useState('');
+  const [ungroupItem, setUngroupItem] = useState<BudgetItem | null>(null);
 
   const groupedItems = useMemo(() => {
     const groups = new Map<string, BudgetItem[]>();
