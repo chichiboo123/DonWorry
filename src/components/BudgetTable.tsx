@@ -107,6 +107,25 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
     setAddAmount('');
     setEditingId(null);
     setAssigningGroupId(null);
+    setDirectEditId(null);
+  };
+
+  const startDirectEditExecution = (item: BudgetItem) => {
+    setDirectEditId(item.id);
+    setDirectEditAmount(String(item.executedAmount));
+    setAddingId(null);
+    setEditingId(null);
+    setAssigningGroupId(null);
+  };
+
+  const saveDirectEditExecution = (item: BudgetItem) => {
+    const newExecuted = Number(directEditAmount.replace(/,/g, ''));
+    if (isNaN(newExecuted) || newExecuted < 0) { toast.error('올바른 금액을 입력해주세요.'); return; }
+    const remaining = item.budgetAmount - newExecuted;
+    const rate = item.budgetAmount > 0 ? (newExecuted / item.budgetAmount) * 100 : 0;
+    onUpdate?.(item.id, { executedAmount: newExecuted, remainingAmount: remaining, executionRate: rate });
+    setDirectEditId(null);
+    toast.success('집행액이 수정되었습니다.');
   };
 
   const saveAddExecution = (item: BudgetItem) => {
@@ -115,11 +134,7 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
     const newExecuted = item.executedAmount + amount;
     const remaining = item.budgetAmount - newExecuted;
     const rate = item.budgetAmount > 0 ? (newExecuted / item.budgetAmount) * 100 : 0;
-    onUpdate?.(item.id, {
-      executedAmount: newExecuted,
-      remainingAmount: remaining,
-      executionRate: rate,
-    });
+    onUpdate?.(item.id, { executedAmount: newExecuted, remainingAmount: remaining, executionRate: rate });
     setAddingId(null);
     toast.success(`${formatKRW(amount)}원이 집행 반영되었습니다.`);
   };
