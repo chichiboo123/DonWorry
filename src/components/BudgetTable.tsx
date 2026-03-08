@@ -395,14 +395,20 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
               <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => saveAddExecution(item)}><Check className="w-3.5 h-3.5 text-primary" /></Button>
               <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setAddingId(null)}><X className="w-3.5 h-3.5" /></Button>
             </div>
+          ) : directEditId === item.id ? (
+            <div className="flex items-center gap-1 justify-end">
+              <Input className="w-28 h-7 text-right text-sm" value={directEditAmount} onChange={e => setDirectEditAmount(e.target.value)} onKeyDown={e => e.key === 'Enter' && saveDirectEditExecution(item)} autoFocus />
+              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => saveDirectEditExecution(item)}><Check className="w-3.5 h-3.5 text-primary" /></Button>
+              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setDirectEditId(null)}><X className="w-3.5 h-3.5" /></Button>
+            </div>
+          ) : editable ? (
+            <div className="flex items-center gap-1.5 justify-end">
+              <span>{formatKRW(item.executedAmount)}</span>
+              <button className="text-[10px] text-primary hover:underline" onClick={() => startAddExecution(item)}>추가</button>
+              <button className="text-[10px] text-muted-foreground hover:underline" onClick={() => startDirectEditExecution(item)}>수정</button>
+            </div>
           ) : (
-            <span
-              className={editable ? 'cursor-pointer hover:text-primary underline decoration-dotted underline-offset-2' : ''}
-              onClick={() => editable && startAddExecution(item)}
-              title={editable ? '클릭하여 집행액 추가' : ''}
-            >
-              {formatKRW(item.executedAmount)}
-            </span>
+            <span>{formatKRW(item.executedAmount)}</span>
           )}
         </TableCell>
         <TableCell className="text-right text-sm">
