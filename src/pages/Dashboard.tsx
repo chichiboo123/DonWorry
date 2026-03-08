@@ -5,10 +5,10 @@ import BudgetChart from '@/components/BudgetChart';
 import BudgetTable from '@/components/BudgetTable';
 import CompactBudgetView from '@/components/CompactBudgetView';
 import { useBudget } from '@/hooks/use-budget';
-import { isSetupDone } from '@/lib/budget-store';
+import { isSetupDone, clearSetup } from '@/lib/budget-store';
 import SetupPage from './SetupPage';
 import { useState } from 'react';
-import { LayoutGrid, Table as TableIcon } from 'lucide-react';
+import { LayoutGrid, Table as TableIcon, RotateCcw } from 'lucide-react';
 
 export default function Dashboard() {
   const budget = useBudget();
