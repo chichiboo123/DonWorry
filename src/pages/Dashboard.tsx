@@ -43,18 +43,31 @@ export default function Dashboard() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm sm:text-base font-semibold text-foreground">상세 내역</h2>
-            <button
-              onClick={() => setCompactView(!compactView)}
-              className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm transition-colors ${
-                compactView
-                  ? 'bg-primary/10 text-primary font-medium'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-              }`}
-            >
-              {compactView ? <TableIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
-              <span className="hidden sm:inline">{compactView ? '테이블 보기' : '간단하게 보기'}</span>
-              <span className="sm:hidden">{compactView ? '테이블' : '간단히'}</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  clearSetup();
+                  setSetupDone(false);
+                }}
+                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              >
+                <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">데이터 다시 불러오기</span>
+                <span className="sm:hidden">다시 불러오기</span>
+              </button>
+              <button
+                onClick={() => setCompactView(!compactView)}
+                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm transition-colors ${
+                  compactView
+                    ? 'bg-primary/10 text-primary font-medium'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`}
+              >
+                {compactView ? <TableIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+                <span className="hidden sm:inline">{compactView ? '테이블 보기' : '간단하게 보기'}</span>
+                <span className="sm:hidden">{compactView ? '테이블' : '간단히'}</span>
+              </button>
+            </div>
           </div>
           {compactView ? (
             <CompactBudgetView items={budget.items} />
