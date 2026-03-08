@@ -258,7 +258,7 @@ export function useBudget() {
   summary.categoryBreakdown = Array.from(catMap.entries()).map(([name, data]) => ({ name, ...data }));
 
   return {
-    items, theme, setTheme, loadItems, addItem, updateItem, deleteItem, deleteGroup,
+    items, theme, setTheme, loadItems, addItem, updateItem, deleteItem, deleteGroup, reorderItems,
     summary, undo, redo, canUndo, canRedo,
     dataMode, setDataMode, syncing, refreshFromOnline, pushToOnline,
   };
