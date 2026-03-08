@@ -48,16 +48,30 @@ export default function Dashboard() {
               </>
             )}
           </div>
-          {budget.dataMode === 'online' && (
-            <button
-              onClick={budget.refreshFromOnline}
-              disabled={budget.syncing}
-              className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${budget.syncing ? 'animate-spin' : ''}`} />
-              새로고침
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {budget.dataMode === 'online' && (
+              <>
+                <button
+                  onClick={budget.pushToOnline}
+                  disabled={budget.syncing || budget.items.length === 0}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                  title="현재 로컬 데이터를 스프레드시트에 업로드"
+                >
+                  <Upload className={`w-3.5 h-3.5`} />
+                  업로드
+                </button>
+                <button
+                  onClick={budget.refreshFromOnline}
+                  disabled={budget.syncing}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                  title="스프레드시트에서 최신 데이터 불러오기"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${budget.syncing ? 'animate-spin' : ''}`} />
+                  다운로드
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Summary cards + Pie chart in one row */}
