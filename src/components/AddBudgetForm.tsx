@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BudgetItem } from '@/lib/budget-types';
@@ -7,12 +7,13 @@ import { toast } from 'sonner';
 
 interface Props {
   onAdd: (item: BudgetItem) => void;
+  existingGroups?: string[];
 }
 
-export default function AddBudgetForm({ onAdd }: Props) {
+export default function AddBudgetForm({ onAdd, existingGroups = [] }: Props) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
-    category: '', costType: '', description: '', budgetAmount: '', executedAmount: '',
+    group: '', category: '', costType: '', description: '', budgetAmount: '', executedAmount: '',
   });
 
   const budgetNum = Number((form.budgetAmount || '0').replace(/,/g, ''));
@@ -36,8 +37,9 @@ export default function AddBudgetForm({ onAdd }: Props) {
     const rate = budgetNum > 0 ? (executedNum / budgetNum) * 100 : 0;
     onAdd({
       id: crypto.randomUUID(),
+      group: form.group,
       category: form.category,
-      subCategory: '',
+      subCategory: form.group,
       costType: form.costType,
       description: form.description,
       budgetAmount: budgetNum,
@@ -46,7 +48,7 @@ export default function AddBudgetForm({ onAdd }: Props) {
       remainingAmount: remainingAmount,
       settlementFund: 0,
     });
-    setForm({ category: '', costType: '', description: '', budgetAmount: '', executedAmount: '' });
+    setForm({ group: '', category: '', costType: '', description: '', budgetAmount: '', executedAmount: '' });
     setOpen(false);
     toast.success('항목이 추가되었습니다.');
   };
@@ -63,6 +65,19 @@ export default function AddBudgetForm({ onAdd }: Props) {
     <form onSubmit={handleSubmit} className="glass-card rounded-xl p-5 space-y-4">
       <h3 className="font-semibold text-foreground">새 예산 항목</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="sm:col-span-2">
+          <Input
+            placeholder="그룹 (선택사항, 예: [초]학교자율과제운영)"
+            value={form.group}
+            onChange={e => setForm(f => ({ ...f, group: e.target.value }))}
+            list="group-suggestions"
+          />
+          {existingGroups.length > 0 && (
+            <datalist id="group-suggestions">
+              {existingGroups.map(g => <option key={g} value={g} />)}
+            </datalist>
+          )}
+        </div>
         <Input placeholder="세부사업 *" value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} />
         <Input placeholder="비목" value={form.costType} onChange={e => setForm(f => ({ ...f, costType: e.target.value }))} />
         <Input placeholder="산출내역 *" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="sm:col-span-2" />

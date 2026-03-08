@@ -56,10 +56,11 @@ function parseRows(rows: string[][]): BudgetItem[] {
 
     // Determine hierarchy
     if (col0 && !col1 && budgetAmt > 0) {
-      // This could be a category or subcategory
       if (col0.startsWith('[') || col0.startsWith('［')) {
+        // [초] level = group (subCategory)
         currentSubCategory = col0;
       } else {
+        // Top level = category (세부사업)
         currentCategory = col0;
         currentSubCategory = '';
       }
@@ -67,9 +68,10 @@ function parseRows(rows: string[][]): BudgetItem[] {
     }
 
     if (col0 && col1) {
-      // Detail item
+      // Detail item - group is the subCategory ([초] level)
       items.push({
         id: crypto.randomUUID(),
+        group: currentSubCategory,
         category: currentCategory,
         subCategory: currentSubCategory,
         costType: col0,
@@ -93,7 +95,6 @@ function parseNumber(val: unknown): number {
 }
 
 export async function fetchGoogleSheet(url: string): Promise<BudgetItem[]> {
-  // Convert Google Sheets URL to CSV export URL
   const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
   if (!match) throw new Error('올바른 구글 스프레드시트 링크가 아닙니다.');
   
