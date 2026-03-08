@@ -18,8 +18,12 @@ export default function AppHeader({ theme, onThemeChange }: Props) {
       <div className="container mx-auto px-3 sm:px-4 h-12 sm:h-14 flex items-center justify-between">
         <button onClick={() => navigate('/')} className="flex items-center gap-1.5 sm:gap-2 hover:opacity-80 transition-opacity">
           <img src={moneyIcon} alt="Don Worry" className="w-6 h-6 sm:w-7 sm:h-7 animate-float" />
-          <span className="text-base sm:text-lg font-bold text-foreground">돈 워리</span>
-          <span className="text-xs text-muted-foreground hidden sm:inline">Don Worry</span>
+          <span className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+            돈 워리
+          </span>
+          <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:inline" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+            Don Worry
+          </span>
         </button>
 
         <div className="flex items-center gap-2 sm:gap-3">

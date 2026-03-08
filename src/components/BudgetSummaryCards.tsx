@@ -18,16 +18,16 @@ export default function BudgetSummaryCards({ summary }: Props) {
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+    <div className="grid grid-cols-2 gap-2 sm:gap-3 h-full">
       {cards.map((card) => (
-        <div key={card.label} className="glass-card rounded-xl p-3 sm:p-5 flex flex-col gap-2 sm:gap-3">
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <div className={`p-1.5 sm:p-2 rounded-lg ${card.accent}`}>
-              <card.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
+        <div key={card.label} className="glass-card rounded-xl p-3 sm:p-4 flex flex-col gap-1.5 sm:gap-2 justify-center">
+          <div className="flex items-center gap-1.5">
+            <div className={`p-1 sm:p-1.5 rounded-md ${card.accent}`}>
+              <card.icon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary" />
             </div>
-            <span className="text-xs sm:text-sm text-muted-foreground">{card.label}</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground">{card.label}</span>
           </div>
-          <p className="text-base sm:text-xl font-bold text-foreground">{card.value}</p>
+          <p className="text-sm sm:text-lg font-bold text-foreground">{card.value}</p>
         </div>
       ))}
     </div>

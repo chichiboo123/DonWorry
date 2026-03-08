@@ -1,19 +1,12 @@
 import { useState } from 'react';
 import { BudgetItem, BudgetSummary } from '@/lib/budget-types';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { X } from 'lucide-react';
 
 const COLORS = [
   'hsl(210,60%,65%)', 'hsl(45,80%,70%)', 'hsl(150,40%,60%)',
   'hsl(340,50%,70%)', 'hsl(280,30%,65%)', 'hsl(20,60%,65%)',
 ];
-
-function formatM(n: number) {
-  if (n >= 10000) return (n / 10000).toFixed(0) + '만';
-  if (n >= 1000) return (n / 1000).toFixed(0) + '천';
-  return n.toString();
-}
 
 function formatKRW(n: number) {
   return n.toLocaleString('ko-KR') + '원';
@@ -28,16 +21,16 @@ export default function BudgetChart({ summary, items = [] }: Props) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const data = summary.categoryBreakdown.map(c => ({
-    name: c.name.length > 8 ? c.name.slice(0, 8) + '…' : c.name,
+    name: c.name.length > 10 ? c.name.slice(0, 10) + '…' : c.name,
     fullName: c.name,
-    예산: c.budget,
-    집행: c.executed,
-    잔액: c.remaining,
+    value: c.budget,
+    executed: c.executed,
+    remaining: c.remaining,
   }));
 
   if (data.length === 0) return null;
 
-  const handleBarClick = (dataItem: any) => {
+  const handlePieClick = (dataItem: any) => {
     if (dataItem?.fullName) {
       setSelectedCategory(dataItem.fullName);
     }
@@ -51,27 +44,48 @@ export default function BudgetChart({ summary, items = [] }: Props) {
     ? summary.categoryBreakdown.find(c => c.name === selectedCategory)
     : null;
 
+  const renderCustomLabel = ({ name, percent, x, y, midAngle }: any) => {
+    if (percent < 0.05) return null;
+    return (
+      <text x={x} y={y} fill="hsl(220,15%,40%)" textAnchor={midAngle > 180 ? 'end' : 'start'} dominantBaseline="central" fontSize={11}>
+        {name} {(percent * 100).toFixed(0)}%
+      </text>
+    );
+  };
+
   return (
     <>
-      <div className="glass-card rounded-xl p-5">
-        <h3 className="text-base font-semibold text-foreground mb-4">사업별 예산 현황</h3>
-        <p className="text-xs text-muted-foreground mb-2">막대를 클릭하면 상세 정보를 볼 수 있습니다</p>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 40 }}>
-            <XAxis dataKey="name" angle={-30} textAnchor="end" fontSize={11} tick={{ fill: 'hsl(220,15%,50%)' }} />
-            <YAxis tickFormatter={formatM} fontSize={11} tick={{ fill: 'hsl(220,15%,50%)' }} />
-            <Tooltip
-              formatter={(value: number) => value.toLocaleString('ko-KR') + '원'}
-              contentStyle={{ borderRadius: '8px', border: '1px solid hsl(210,25%,88%)', fontSize: '13px' }}
-            />
-            <Bar dataKey="예산" radius={[4, 4, 0, 0]} cursor="pointer" onClick={(_d: any, idx: number) => handleBarClick(data[idx])}>
-              {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} fillOpacity={0.7} />)}
-            </Bar>
-            <Bar dataKey="집행" radius={[4, 4, 0, 0]} cursor="pointer" onClick={(_d: any, idx: number) => handleBarClick(data[idx])}>
-              {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} fillOpacity={1} />)}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+      <div className="glass-card rounded-xl p-4 sm:p-5 h-full flex flex-col">
+        <h3 className="text-sm sm:text-base font-semibold text-foreground mb-1">사업별 예산 현황</h3>
+        <p className="text-[10px] sm:text-xs text-muted-foreground mb-3">영역을 클릭하면 상세 정보를 볼 수 있습니다</p>
+        <div className="flex-1 min-h-0">
+          <ResponsiveContainer width="100%" height={260}>
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                labelLine={true}
+                label={renderCustomLabel}
+                outerRadius={90}
+                innerRadius={40}
+                dataKey="value"
+                cursor="pointer"
+                onClick={handlePieClick}
+                strokeWidth={2}
+                stroke="hsl(0,0%,100%)"
+              >
+                {data.map((_, i) => (
+                  <Cell key={i} fill={COLORS[i % COLORS.length]} fillOpacity={0.85} />
+                ))}
+              </Pie>
+              <Tooltip
+                formatter={(value: number) => formatKRW(value)}
+                contentStyle={{ borderRadius: '8px', border: '1px solid hsl(210,25%,88%)', fontSize: '12px' }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       <Dialog open={!!selectedCategory} onOpenChange={(open) => !open && setSelectedCategory(null)}>
