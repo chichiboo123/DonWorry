@@ -239,6 +239,58 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
     return { budget, executed, remaining, rate };
   };
 
+  // Drag end handler for reordering groups
+  const handleGroupDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !onReorder) return;
+    const groupNamesList = Array.from(groupedItems.groups.keys());
+    const oldIndex = groupNamesList.indexOf(active.id as string);
+    const newIndex = groupNamesList.indexOf(over.id as string);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reorderedGroups = arrayMove(groupNamesList, oldIndex, newIndex);
+    // Rebuild items array: groups in new order, then ungrouped
+    const newItems: BudgetItem[] = [];
+    reorderedGroups.forEach(g => {
+      const gItems = groupedItems.groups.get(g);
+      if (gItems) newItems.push(...gItems);
+    });
+    newItems.push(...groupedItems.ungrouped);
+    onReorder(newItems);
+  };
+
+  // Drag end handler for reordering items within a group
+  const handleItemDragEnd = (groupName: string) => (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !onReorder) return;
+    const groupItems = groupedItems.groups.get(groupName) || [];
+    const oldIndex = groupItems.findIndex(i => i.id === active.id);
+    const newIndex = groupItems.findIndex(i => i.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = arrayMove(groupItems, oldIndex, newIndex);
+    // Rebuild full items array
+    const newItems: BudgetItem[] = [];
+    Array.from(groupedItems.groups.entries()).forEach(([g, gItems]) => {
+      newItems.push(...(g === groupName ? reordered : gItems));
+    });
+    newItems.push(...groupedItems.ungrouped);
+    onReorder(newItems);
+  };
+
+  // Drag end handler for ungrouped items
+  const handleUngroupedDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !onReorder) return;
+    const ungrouped = groupedItems.ungrouped;
+    const oldIndex = ungrouped.findIndex(i => i.id === active.id);
+    const newIndex = ungrouped.findIndex(i => i.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = arrayMove(ungrouped, oldIndex, newIndex);
+    const newItems: BudgetItem[] = [];
+    Array.from(groupedItems.groups.values()).forEach(gItems => newItems.push(...gItems));
+    newItems.push(...reordered);
+    onReorder(newItems);
+  };
+
   // Mobile card view for a single item
   const renderMobileCard = (item: BudgetItem) => {
     const isAdding = addingId === item.id;
