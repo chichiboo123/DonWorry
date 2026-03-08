@@ -27,14 +27,14 @@ export default function Dashboard() {
       <AppHeader theme={budget.theme} onThemeChange={budget.setTheme} />
       <main className="container mx-auto px-4 py-6 space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">예산 현황</h1>
-          <p className="text-sm text-muted-foreground">세출예산 집행현황을 한눈에 확인하세요</p>
+          <h1 className="text-3xl font-bold text-foreground">예산 현황</h1>
+          <p className="text-sm text-muted-foreground mt-1">세출예산 집행현황을 한눈에 확인하세요</p>
         </div>
         <BudgetSummaryCards summary={budget.summary} />
         <BudgetChart summary={budget.summary} />
         <div>
-          <h2 className="text-lg font-semibold text-foreground mb-3">상세 내역</h2>
-          <BudgetTable items={budget.items} />
+          <h2 className="text-xl font-semibold text-foreground mb-3">상세 내역</h2>
+          <BudgetTable items={budget.items} editable onUpdate={budget.updateItem} onDelete={budget.deleteItem} />
         </div>
       </main>
     </div>
