@@ -8,7 +8,7 @@ import { useBudget } from '@/hooks/use-budget';
 import { isSetupDone, clearSetup } from '@/lib/budget-store';
 import SetupPage from './SetupPage';
 import { useState } from 'react';
-import { LayoutGrid, Table as TableIcon, RotateCcw, RefreshCw, Globe, HardDrive, Loader2, Upload, Download, Link } from 'lucide-react';
+import { LayoutGrid, Table as TableIcon, RotateCcw, RefreshCw, Globe, HardDrive, Loader2, Upload, Download, Link, ArrowUpDown } from 'lucide-react';
 import { DataMode, getScriptUrl, setScriptUrl, setDataMode as setGasDataMode } from '@/lib/google-apps-script';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
