@@ -111,7 +111,7 @@ export default function CompactBudgetView({ items }: Props) {
               </div>
             </button>
             {!isCollapsed && (
-              <div className="p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" style={{ backgroundColor: `hsl(${color.bg} / 0.3)` }}>
+              <div className="p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {groupItems.map(renderCard)}
               </div>
             )}
