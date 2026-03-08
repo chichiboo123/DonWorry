@@ -38,6 +38,8 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
   const [editForm, setEditForm] = useState<EditForm>({ category: '', costType: '', description: '', budgetAmount: '', executedAmount: '' });
   const [addingId, setAddingId] = useState<string | null>(null);
   const [addAmount, setAddAmount] = useState('');
+  const [directEditId, setDirectEditId] = useState<string | null>(null);
+  const [directEditAmount, setDirectEditAmount] = useState('');
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [assigningGroupId, setAssigningGroupId] = useState<string | null>(null);
   const [newGroupName, setNewGroupName] = useState('');
@@ -105,6 +107,25 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
     setAddAmount('');
     setEditingId(null);
     setAssigningGroupId(null);
+    setDirectEditId(null);
+  };
+
+  const startDirectEditExecution = (item: BudgetItem) => {
+    setDirectEditId(item.id);
+    setDirectEditAmount(String(item.executedAmount));
+    setAddingId(null);
+    setEditingId(null);
+    setAssigningGroupId(null);
+  };
+
+  const saveDirectEditExecution = (item: BudgetItem) => {
+    const newExecuted = Number(directEditAmount.replace(/,/g, ''));
+    if (isNaN(newExecuted) || newExecuted < 0) { toast.error('올바른 금액을 입력해주세요.'); return; }
+    const remaining = item.budgetAmount - newExecuted;
+    const rate = item.budgetAmount > 0 ? (newExecuted / item.budgetAmount) * 100 : 0;
+    onUpdate?.(item.id, { executedAmount: newExecuted, remainingAmount: remaining, executionRate: rate });
+    setDirectEditId(null);
+    toast.success('집행액이 수정되었습니다.');
   };
 
   const saveAddExecution = (item: BudgetItem) => {
@@ -113,11 +134,7 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
     const newExecuted = item.executedAmount + amount;
     const remaining = item.budgetAmount - newExecuted;
     const rate = item.budgetAmount > 0 ? (newExecuted / item.budgetAmount) * 100 : 0;
-    onUpdate?.(item.id, {
-      executedAmount: newExecuted,
-      remainingAmount: remaining,
-      executionRate: rate,
-    });
+    onUpdate?.(item.id, { executedAmount: newExecuted, remainingAmount: remaining, executionRate: rate });
     setAddingId(null);
     toast.success(`${formatKRW(amount)}원이 집행 반영되었습니다.`);
   };
@@ -231,13 +248,30 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
                   <X className="w-3 h-3" />
                 </Button>
               </div>
+            ) : directEditId === item.id ? (
+              <div className="flex items-center gap-1 justify-end">
+                <Input
+                  className="w-24 h-6 text-right text-xs"
+                  value={directEditAmount}
+                  onChange={e => setDirectEditAmount(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && saveDirectEditExecution(item)}
+                  autoFocus
+                />
+                <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => saveDirectEditExecution(item)}>
+                  <Check className="w-3 h-3 text-primary" />
+                </Button>
+                <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => setDirectEditId(null)}>
+                  <X className="w-3 h-3" />
+                </Button>
+              </div>
+            ) : editable ? (
+              <div className="flex items-center gap-1 justify-end">
+                <span className="text-xs">{formatKRW(item.executedAmount)}</span>
+                <button className="text-[9px] text-primary underline" onClick={() => startAddExecution(item)}>추가</button>
+                <button className="text-[9px] text-muted-foreground underline" onClick={() => startDirectEditExecution(item)}>수정</button>
+              </div>
             ) : (
-              <span
-                className={editable ? 'cursor-pointer hover:text-primary underline decoration-dotted underline-offset-2' : ''}
-                onClick={() => editable && startAddExecution(item)}
-              >
-                {formatKRW(item.executedAmount)}
-              </span>
+              <span>{formatKRW(item.executedAmount)}</span>
             )}
           </span>
           <span className="text-muted-foreground">잔액</span>
@@ -361,14 +395,20 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
               <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => saveAddExecution(item)}><Check className="w-3.5 h-3.5 text-primary" /></Button>
               <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setAddingId(null)}><X className="w-3.5 h-3.5" /></Button>
             </div>
+          ) : directEditId === item.id ? (
+            <div className="flex items-center gap-1 justify-end">
+              <Input className="w-28 h-7 text-right text-sm" value={directEditAmount} onChange={e => setDirectEditAmount(e.target.value)} onKeyDown={e => e.key === 'Enter' && saveDirectEditExecution(item)} autoFocus />
+              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => saveDirectEditExecution(item)}><Check className="w-3.5 h-3.5 text-primary" /></Button>
+              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setDirectEditId(null)}><X className="w-3.5 h-3.5" /></Button>
+            </div>
+          ) : editable ? (
+            <div className="flex items-center gap-1.5 justify-end">
+              <span>{formatKRW(item.executedAmount)}</span>
+              <button className="text-[10px] text-primary hover:underline" onClick={() => startAddExecution(item)}>추가</button>
+              <button className="text-[10px] text-muted-foreground hover:underline" onClick={() => startDirectEditExecution(item)}>수정</button>
+            </div>
           ) : (
-            <span
-              className={editable ? 'cursor-pointer hover:text-primary underline decoration-dotted underline-offset-2' : ''}
-              onClick={() => editable && startAddExecution(item)}
-              title={editable ? '클릭하여 집행액 추가' : ''}
-            >
-              {formatKRW(item.executedAmount)}
-            </span>
+            <span>{formatKRW(item.executedAmount)}</span>
           )}
         </TableCell>
         <TableCell className="text-right text-sm">
