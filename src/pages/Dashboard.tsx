@@ -8,13 +8,18 @@ import { useBudget } from '@/hooks/use-budget';
 import { isSetupDone, clearSetup } from '@/lib/budget-store';
 import SetupPage from './SetupPage';
 import { useState } from 'react';
-import { LayoutGrid, Table as TableIcon, RotateCcw, RefreshCw, Globe, HardDrive, Loader2, Upload } from 'lucide-react';
-import { DataMode } from '@/lib/google-apps-script';
+import { LayoutGrid, Table as TableIcon, RotateCcw, RefreshCw, Globe, HardDrive, Loader2, Upload, Download, Link } from 'lucide-react';
+import { DataMode, getScriptUrl, setScriptUrl, setDataMode as setGasDataMode } from '@/lib/google-apps-script';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 export default function Dashboard() {
   const budget = useBudget();
   const [setupDone, setSetupDone] = useState(isSetupDone());
   const [compactView, setCompactView] = useState(false);
+  const [showOnlineConnect, setShowOnlineConnect] = useState(false);
+  const [scriptUrlInput, setScriptUrlInput] = useState(getScriptUrl());
 
   if (!setupDone) {
     return (
@@ -28,23 +33,50 @@ export default function Dashboard() {
     );
   }
 
+  const handleConnectOnline = () => {
+    if (!scriptUrlInput.trim()) return;
+    setScriptUrl(scriptUrlInput);
+    setGasDataMode('online');
+    budget.setDataMode('online');
+    setShowOnlineConnect(false);
+    toast.success('온라인 모드로 전환되었습니다. "업로드" 버튼을 눌러 데이터를 스프레드시트에 저장하세요.');
+  };
+
+  const handleSwitchToLocal = () => {
+    setGasDataMode('local');
+    budget.setDataMode('local');
+    toast.success('로컬 모드로 전환되었습니다.');
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <AppHeader theme={budget.theme} onThemeChange={budget.setTheme} />
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6 flex-1">
-        {/* 모드 표시 */}
-        <div className="flex items-center justify-between">
+        {/* 모드 표시 + 동기화 버튼 */}
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             {budget.dataMode === 'online' ? (
               <>
                 <Globe className="w-3.5 h-3.5 text-green-500" />
                 <span>온라인 모드</span>
                 {budget.syncing && <Loader2 className="w-3 h-3 animate-spin" />}
+                <button
+                  onClick={handleSwitchToLocal}
+                  className="text-xs text-muted-foreground hover:text-foreground underline ml-1"
+                >
+                  로컬로 전환
+                </button>
               </>
             ) : (
               <>
                 <HardDrive className="w-3.5 h-3.5" />
                 <span>로컬 모드</span>
+                <button
+                  onClick={() => setShowOnlineConnect(!showOnlineConnect)}
+                  className="text-xs text-muted-foreground hover:text-foreground underline ml-1"
+                >
+                  온라인 연결
+                </button>
               </>
             )}
           </div>
@@ -54,25 +86,47 @@ export default function Dashboard() {
                 <button
                   onClick={budget.pushToOnline}
                   disabled={budget.syncing || budget.items.length === 0}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                  title="현재 로컬 데이터를 스프레드시트에 업로드"
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors disabled:opacity-50"
+                  title="현재 데이터를 스프레드시트에 업로드"
                 >
-                  <Upload className={`w-3.5 h-3.5`} />
+                  <Upload className="w-3.5 h-3.5" />
                   업로드
                 </button>
                 <button
                   onClick={budget.refreshFromOnline}
                   disabled={budget.syncing}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors disabled:opacity-50"
                   title="스프레드시트에서 최신 데이터 불러오기"
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 ${budget.syncing ? 'animate-spin' : ''}`} />
+                  <Download className="w-3.5 h-3.5" />
                   다운로드
                 </button>
               </>
             )}
           </div>
         </div>
+
+        {/* 온라인 연결 패널 */}
+        {showOnlineConnect && budget.dataMode === 'local' && (
+          <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+            <p className="text-sm text-foreground font-medium">Apps Script URL로 온라인 연결</p>
+            <p className="text-xs text-muted-foreground">
+              연결 후 "업로드" 버튼을 눌러 현재 데이터를 스프레드시트에 저장할 수 있습니다.
+            </p>
+            <div className="flex gap-2">
+              <Input
+                placeholder="https://script.google.com/macros/s/.../exec"
+                value={scriptUrlInput}
+                onChange={(e) => setScriptUrlInput(e.target.value)}
+                className="text-sm"
+              />
+              <Button onClick={handleConnectOnline} disabled={!scriptUrlInput.trim()} size="sm">
+                <Link className="w-4 h-4 mr-1" />
+                연결
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Summary cards + Pie chart in one row */}
         <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
