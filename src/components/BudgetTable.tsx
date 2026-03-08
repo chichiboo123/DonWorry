@@ -581,3 +581,4 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
       </AlertDialog>
     </>
   );
+}
