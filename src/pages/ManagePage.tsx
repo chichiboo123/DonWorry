@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import AppHeader from '@/components/AppHeader';
+import AppFooter from '@/components/AppFooter';
 import FileUploader from '@/components/FileUploader';
 import AddBudgetForm from '@/components/AddBudgetForm';
 import BudgetTable from '@/components/BudgetTable';
