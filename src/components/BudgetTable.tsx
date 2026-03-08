@@ -534,6 +534,7 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
   const tableHeader = (
     <TableHeader>
       <TableRow className="bg-primary/5">
+        {editable && onReorder && <TableHead className="w-8"></TableHead>}
         <TableHead className="font-semibold text-foreground">세부사업</TableHead>
         <TableHead className="font-semibold text-foreground">비목</TableHead>
         <TableHead className="font-semibold text-foreground">산출내역</TableHead>
