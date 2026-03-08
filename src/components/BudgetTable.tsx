@@ -22,6 +22,7 @@ interface Props {
   editable?: boolean;
   onUpdate?: (id: string, updated: Partial<BudgetItem>) => void;
   onDelete?: (id: string) => void;
+  onDeleteGroup?: (groupName: string) => void;
 }
 
 interface EditForm {
@@ -32,7 +33,7 @@ interface EditForm {
   executedAmount: string;
 }
 
-export default function BudgetTable({ items, editable = false, onUpdate, onDelete }: Props) {
+export default function BudgetTable({ items, editable = false, onUpdate, onDelete, onDeleteGroup }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<EditForm>({ category: '', costType: '', description: '', budgetAmount: '', executedAmount: '' });
   const [addingId, setAddingId] = useState<string | null>(null);
@@ -41,7 +42,6 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
   const [assigningGroupId, setAssigningGroupId] = useState<string | null>(null);
   const [newGroupName, setNewGroupName] = useState('');
 
-  // Group items
   const groupedItems = useMemo(() => {
     const groups = new Map<string, BudgetItem[]>();
     const ungrouped: BudgetItem[] = [];
@@ -61,7 +61,7 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
 
   if (items.length === 0) {
     return (
-      <div className="glass-card rounded-xl p-8 text-center text-muted-foreground">
+      <div className="glass-card rounded-xl p-6 sm:p-8 text-center text-muted-foreground text-sm">
         아직 데이터가 없습니다. 엑셀 파일을 업로드하거나 직접 항목을 추가해주세요.
       </div>
     );
@@ -129,6 +129,14 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
     }
   };
 
+  const handleDeleteGroup = (groupName: string, count: number) => {
+    const cleanName = groupName.replace(/^\[초\]/, '').replace(/^\[초］/, '').replace(/^［초\]/, '').replace(/^［초］/, '');
+    if (confirm(`"${cleanName}" 그룹의 ${count}건 항목을 모두 삭제하시겠습니까?`)) {
+      onDeleteGroup?.(groupName);
+      toast.success(`"${cleanName}" 그룹이 삭제되었습니다.`);
+    }
+  };
+
   const handleRemoveFromGroup = (item: BudgetItem) => {
     onUpdate?.(item.id, { group: '', subCategory: '' });
     toast.success('그룹에서 해제되었습니다.');
@@ -172,6 +180,120 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
     return { budget, executed, remaining, rate };
   };
 
+  // Mobile card view for a single item
+  const renderMobileCard = (item: BudgetItem) => {
+    const isAdding = addingId === item.id;
+
+    return (
+      <div key={item.id} className="p-3 border-b border-border/30 last:border-b-0">
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-sm font-medium text-foreground leading-snug flex-1">{item.description}</p>
+          {editable && (
+            <div className="flex gap-0.5 shrink-0">
+              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => startEdit(item)}>
+                <Pencil className="w-3 h-3" />
+              </Button>
+              {!item.group && (
+                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => { setAssigningGroupId(item.id); setEditingId(null); setAddingId(null); }}>
+                  <FolderPlus className="w-3 h-3" />
+                </Button>
+              )}
+              {item.group && (
+                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleRemoveFromGroup(item)}>
+                  <Ungroup className="w-3 h-3" />
+                </Button>
+              )}
+              <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive" onClick={() => handleDelete(item)}>
+                <Trash2 className="w-3 h-3" />
+              </Button>
+            </div>
+          )}
+        </div>
+        <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+          <span className="text-muted-foreground">예산현액</span>
+          <span className="text-right font-medium">{formatKRW(item.budgetAmount)}</span>
+          <span className="text-muted-foreground">집행액</span>
+          <span className="text-right font-medium">
+            {isAdding ? (
+              <div className="flex items-center gap-1 justify-end">
+                <Input
+                  className="w-20 h-6 text-right text-xs"
+                  placeholder="추가 금액"
+                  value={addAmount}
+                  onChange={e => setAddAmount(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && saveAddExecution(item)}
+                  autoFocus
+                />
+                <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => saveAddExecution(item)}>
+                  <Check className="w-3 h-3 text-primary" />
+                </Button>
+                <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => setAddingId(null)}>
+                  <X className="w-3 h-3" />
+                </Button>
+              </div>
+            ) : (
+              <span
+                className={editable ? 'cursor-pointer hover:text-primary underline decoration-dotted underline-offset-2' : ''}
+                onClick={() => editable && startAddExecution(item)}
+              >
+                {formatKRW(item.executedAmount)}
+              </span>
+            )}
+          </span>
+          <span className="text-muted-foreground">잔액</span>
+          <span className="text-right font-medium">{formatKRW(item.remainingAmount)}</span>
+          <span className="text-muted-foreground">집행률</span>
+          <span className="text-right">
+            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
+              item.executionRate > 80 ? 'bg-destructive/10 text-destructive' :
+              item.executionRate > 50 ? 'bg-accent/20 text-accent-foreground' :
+              'bg-secondary text-secondary-foreground'
+            }`}>
+              {item.executionRate.toFixed(1)}%
+            </span>
+          </span>
+        </div>
+        {assigningGroupId === item.id && (
+          <div className="mt-2 flex flex-col gap-2 p-2 bg-primary/5 rounded-lg">
+            <span className="text-xs font-medium">그룹 지정</span>
+            {groupNames.length > 0 && (
+              <Select onValueChange={(val) => handleAssignGroup(item, val)}>
+                <SelectTrigger className="h-7 text-xs">
+                  <SelectValue placeholder="기존 그룹 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  {groupNames.map(g => (
+                    <SelectItem key={g} value={g}>{g.replace(/^\[초\]/, '').replace(/^\[초］/, '').replace(/^［초\]/, '').replace(/^［초］/, '')}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <div className="flex gap-1">
+              <Input className="h-7 text-xs flex-1" placeholder="새 그룹 이름" value={newGroupName} onChange={e => setNewGroupName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleCreateAndAssignGroup(item)} />
+              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleCreateAndAssignGroup(item)}>생성</Button>
+              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setAssigningGroupId(null); setNewGroupName(''); }}>
+                <X className="w-3 h-3" />
+              </Button>
+            </div>
+          </div>
+        )}
+        {editingId === item.id && (
+          <div className="mt-2 grid grid-cols-2 gap-2 p-2 bg-primary/5 rounded-lg">
+            <Input className="h-7 text-xs col-span-2" placeholder="산출내역" value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} />
+            <Input className="h-7 text-xs" placeholder="세부사업" value={editForm.category} onChange={e => setEditForm(f => ({ ...f, category: e.target.value }))} />
+            <Input className="h-7 text-xs" placeholder="비목" value={editForm.costType} onChange={e => setEditForm(f => ({ ...f, costType: e.target.value }))} />
+            <Input className="h-7 text-xs" placeholder="예산현액" value={editForm.budgetAmount} onChange={e => setEditForm(f => ({ ...f, budgetAmount: e.target.value }))} />
+            <Input className="h-7 text-xs" placeholder="집행액" value={editForm.executedAmount} onChange={e => setEditForm(f => ({ ...f, executedAmount: e.target.value }))} />
+            <div className="col-span-2 flex gap-1 justify-end">
+              <Button size="sm" className="h-7 text-xs" onClick={() => saveEdit(item)}>저장</Button>
+              <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditingId(null)}>취소</Button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderRow = (item: BudgetItem, colorStyle?: { bg: string }) => {
     const isEditing = editingId === item.id;
     const isAdding = addingId === item.id;
@@ -180,49 +302,32 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
     if (isEditing) {
       return (
         <TableRow key={item.id} className="bg-primary/5">
-          <TableCell>
-            <Input className="h-7 text-sm" value={editForm.category} onChange={e => setEditForm(f => ({ ...f, category: e.target.value }))} />
-          </TableCell>
-          <TableCell>
-            <Input className="h-7 text-sm" value={editForm.costType} onChange={e => setEditForm(f => ({ ...f, costType: e.target.value }))} />
-          </TableCell>
-          <TableCell>
-            <Input className="h-7 text-sm" value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} />
-          </TableCell>
-          <TableCell>
-            <Input className="h-7 text-sm text-right" value={editForm.budgetAmount} onChange={e => setEditForm(f => ({ ...f, budgetAmount: e.target.value }))} />
-          </TableCell>
-          <TableCell>
-            <Input className="h-7 text-sm text-right" value={editForm.executedAmount} onChange={e => setEditForm(f => ({ ...f, executedAmount: e.target.value }))} />
-          </TableCell>
+          <TableCell><Input className="h-7 text-sm" value={editForm.category} onChange={e => setEditForm(f => ({ ...f, category: e.target.value }))} /></TableCell>
+          <TableCell><Input className="h-7 text-sm" value={editForm.costType} onChange={e => setEditForm(f => ({ ...f, costType: e.target.value }))} /></TableCell>
+          <TableCell><Input className="h-7 text-sm" value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} /></TableCell>
+          <TableCell><Input className="h-7 text-sm text-right" value={editForm.budgetAmount} onChange={e => setEditForm(f => ({ ...f, budgetAmount: e.target.value }))} /></TableCell>
+          <TableCell><Input className="h-7 text-sm text-right" value={editForm.executedAmount} onChange={e => setEditForm(f => ({ ...f, executedAmount: e.target.value }))} /></TableCell>
           <TableCell className="text-right text-sm text-muted-foreground">자동</TableCell>
           <TableCell className="text-right text-sm text-muted-foreground">자동</TableCell>
           <TableCell>
             <div className="flex gap-1 justify-end">
-              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => saveEdit(item)}>
-                <Check className="w-3.5 h-3.5 text-primary" />
-              </Button>
-              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingId(null)}>
-                <X className="w-3.5 h-3.5" />
-              </Button>
+              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => saveEdit(item)}><Check className="w-3.5 h-3.5 text-primary" /></Button>
+              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingId(null)}><X className="w-3.5 h-3.5" /></Button>
             </div>
           </TableCell>
         </TableRow>
       );
     }
 
-    // Group assignment row
     if (isAssigningGroup) {
       return (
         <TableRow key={item.id} className="bg-primary/5">
           <TableCell colSpan={7}>
-            <div className="flex items-center gap-3 py-1">
+            <div className="flex items-center gap-3 py-1 flex-wrap">
               <span className="text-sm font-medium text-foreground whitespace-nowrap">"{item.description}" 그룹 지정:</span>
               {groupNames.length > 0 && (
                 <Select onValueChange={(val) => handleAssignGroup(item, val)}>
-                  <SelectTrigger className="w-48 h-8 text-sm">
-                    <SelectValue placeholder="기존 그룹 선택" />
-                  </SelectTrigger>
+                  <SelectTrigger className="w-48 h-8 text-sm"><SelectValue placeholder="기존 그룹 선택" /></SelectTrigger>
                   <SelectContent>
                     {groupNames.map(g => {
                       const clean = g.replace(/^\[초\]/, '').replace(/^\[초］/, '').replace(/^［초\]/, '').replace(/^［초］/, '');
@@ -232,19 +337,9 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
                 </Select>
               )}
               <span className="text-sm text-muted-foreground">또는</span>
-              <Input
-                className="w-40 h-8 text-sm"
-                placeholder="새 그룹 이름"
-                value={newGroupName}
-                onChange={e => setNewGroupName(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleCreateAndAssignGroup(item)}
-              />
-              <Button size="sm" variant="outline" className="h-8 text-sm" onClick={() => handleCreateAndAssignGroup(item)}>
-                생성
-              </Button>
-              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setAssigningGroupId(null); setNewGroupName(''); }}>
-                <X className="w-3.5 h-3.5" />
-              </Button>
+              <Input className="w-40 h-8 text-sm" placeholder="새 그룹 이름" value={newGroupName} onChange={e => setNewGroupName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleCreateAndAssignGroup(item)} />
+              <Button size="sm" variant="outline" className="h-8 text-sm" onClick={() => handleCreateAndAssignGroup(item)}>생성</Button>
+              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setAssigningGroupId(null); setNewGroupName(''); }}><X className="w-3.5 h-3.5" /></Button>
             </div>
           </TableCell>
           <TableCell />
@@ -262,20 +357,9 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
           {isAdding ? (
             <div className="flex items-center gap-1 justify-end">
               <span className="text-xs text-muted-foreground whitespace-nowrap">{formatKRW(item.executedAmount)} +</span>
-              <Input
-                className="w-24 h-7 text-right text-sm"
-                placeholder="추가 금액"
-                value={addAmount}
-                onChange={e => setAddAmount(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && saveAddExecution(item)}
-                autoFocus
-              />
-              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => saveAddExecution(item)}>
-                <Check className="w-3.5 h-3.5 text-primary" />
-              </Button>
-              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setAddingId(null)}>
-                <X className="w-3.5 h-3.5" />
-              </Button>
+              <Input className="w-24 h-7 text-right text-sm" placeholder="추가 금액" value={addAmount} onChange={e => setAddAmount(e.target.value)} onKeyDown={e => e.key === 'Enter' && saveAddExecution(item)} autoFocus />
+              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => saveAddExecution(item)}><Check className="w-3.5 h-3.5 text-primary" /></Button>
+              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setAddingId(null)}><X className="w-3.5 h-3.5" /></Button>
             </div>
           ) : (
             <span
@@ -300,22 +384,14 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
         {editable && (
           <TableCell>
             <div className="flex gap-1 justify-end">
-              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => startEdit(item)} title="전체 수정">
-                <Pencil className="w-3.5 h-3.5" />
-              </Button>
+              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => startEdit(item)} title="전체 수정"><Pencil className="w-3.5 h-3.5" /></Button>
               {!item.group && (
-                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setAssigningGroupId(item.id); setEditingId(null); setAddingId(null); }} title="그룹 지정">
-                  <FolderPlus className="w-3.5 h-3.5" />
-                </Button>
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setAssigningGroupId(item.id); setEditingId(null); setAddingId(null); }} title="그룹 지정"><FolderPlus className="w-3.5 h-3.5" /></Button>
               )}
               {item.group && (
-                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleRemoveFromGroup(item)} title="그룹 해제">
-                  <Ungroup className="w-3.5 h-3.5" />
-                </Button>
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleRemoveFromGroup(item)} title="그룹 해제"><Ungroup className="w-3.5 h-3.5" /></Button>
               )}
-              <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => handleDelete(item)} title="삭제">
-                <Trash2 className="w-3.5 h-3.5" />
-              </Button>
+              <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => handleDelete(item)} title="삭제"><Trash2 className="w-3.5 h-3.5" /></Button>
             </div>
           </TableCell>
         )}
@@ -349,20 +425,21 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
 
         return (
           <div key={groupName} className="rounded-xl overflow-hidden border" style={{ borderColor: `hsl(${color.border})` }}>
-            <button
-              onClick={() => toggleGroup(groupName)}
-              className="w-full flex items-center justify-between px-4 py-3 text-left transition-colors hover:opacity-90"
+            <div
+              className="w-full flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 transition-colors hover:opacity-90"
               style={{ backgroundColor: `hsl(${color.bg})`, color: `hsl(${color.text})` }}
             >
-              <div className="flex items-center gap-2">
-                {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                <span className="font-semibold">{cleanName}</span>
-                <span className="text-xs opacity-70">({groupItems.length}건)</span>
-              </div>
-              <div className="flex items-center gap-4 text-sm">
-                <span>예산 <strong>{formatKRW(summary.budget)}</strong></span>
-                <span>집행 <strong>{formatKRW(summary.executed)}</strong></span>
-                <span>잔액 <strong>{formatKRW(summary.remaining)}</strong></span>
+              <button onClick={() => toggleGroup(groupName)} className="flex items-center gap-2 text-left flex-1 min-w-0">
+                {isCollapsed ? <ChevronRight className="w-4 h-4 shrink-0" /> : <ChevronDown className="w-4 h-4 shrink-0" />}
+                <span className="font-semibold text-sm sm:text-base truncate">{cleanName}</span>
+                <span className="text-xs opacity-70 shrink-0">({groupItems.length}건)</span>
+              </button>
+              <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+                <div className="hidden sm:flex items-center gap-4 text-sm">
+                  <span>예산 <strong>{formatKRW(summary.budget)}</strong></span>
+                  <span>집행 <strong>{formatKRW(summary.executed)}</strong></span>
+                  <span>잔액 <strong>{formatKRW(summary.remaining)}</strong></span>
+                </div>
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                   summary.rate > 80 ? 'bg-destructive/10 text-destructive' :
                   summary.rate > 50 ? 'bg-accent/20 text-accent-foreground' :
@@ -370,18 +447,36 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
                 }`}>
                   {summary.rate.toFixed(1)}%
                 </span>
+                {editable && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 hover:bg-destructive/10"
+                    onClick={(e) => { e.stopPropagation(); handleDeleteGroup(groupName, groupItems.length); }}
+                    title="그룹 전체 삭제"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                  </Button>
+                )}
               </div>
-            </button>
+            </div>
 
             {!isCollapsed && (
-              <div className="overflow-x-auto">
-                <Table>
-                  {tableHeader}
-                  <TableBody>
-                    {groupItems.map(item => renderRow(item, { bg: color.bg }))}
-                  </TableBody>
-                </Table>
-              </div>
+              <>
+                {/* Desktop table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <Table>
+                    {tableHeader}
+                    <TableBody>
+                      {groupItems.map(item => renderRow(item, { bg: color.bg }))}
+                    </TableBody>
+                  </Table>
+                </div>
+                {/* Mobile cards */}
+                <div className="md:hidden" style={{ backgroundColor: `hsl(${color.bg} / 0.3)` }}>
+                  {groupItems.map(renderMobileCard)}
+                </div>
+              </>
             )}
           </div>
         );
@@ -391,17 +486,22 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
       {groupedItems.ungrouped.length > 0 && (
         <div className="glass-card rounded-xl overflow-hidden">
           {groupedItems.groups.size > 0 && (
-            <div className="px-4 py-2 bg-muted/50 text-sm font-medium text-muted-foreground">
+            <div className="px-3 sm:px-4 py-2 bg-muted/50 text-sm font-medium text-muted-foreground">
               그룹 미지정 항목 ({groupedItems.ungrouped.length}건)
             </div>
           )}
-          <div className="overflow-x-auto">
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-x-auto">
             <Table>
               {tableHeader}
               <TableBody>
                 {groupedItems.ungrouped.map(item => renderRow(item))}
               </TableBody>
             </Table>
+          </div>
+          {/* Mobile cards */}
+          <div className="md:hidden">
+            {groupedItems.ungrouped.map(renderMobileCard)}
           </div>
         </div>
       )}

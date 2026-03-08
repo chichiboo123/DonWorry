@@ -29,32 +29,35 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <AppHeader theme={budget.theme} onThemeChange={budget.setTheme} />
-      <main className="container mx-auto px-4 py-6 space-y-6 flex-1">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6 flex-1">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">예산 현황</h1>
-            <p className="text-sm text-muted-foreground mt-1">세출예산 집행현황을 한눈에 확인하세요</p>
+            <h1 className="text-4xl sm:text-5xl font-extrabold text-foreground tracking-tight" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+              돈 워리
+            </h1>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">세출예산 집행현황을 한눈에 확인하세요</p>
           </div>
           <button
             onClick={() => setCompactView(!compactView)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+            className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm transition-colors ${
               compactView
                 ? 'bg-primary/10 text-primary font-medium'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
             }`}
           >
-            {compactView ? <TableIcon className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
-            {compactView ? '테이블 보기' : '간단하게 보기'}
+            {compactView ? <TableIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+            <span className="hidden sm:inline">{compactView ? '테이블 보기' : '간단하게 보기'}</span>
+            <span className="sm:hidden">{compactView ? '테이블' : '간단히'}</span>
           </button>
         </div>
         <BudgetSummaryCards summary={budget.summary} />
         <BudgetChart summary={budget.summary} items={budget.items} />
         <div>
-          <h2 className="text-xl font-semibold text-foreground mb-3">상세 내역</h2>
+          <h2 className="text-base sm:text-lg font-semibold text-foreground mb-3">상세 내역</h2>
           {compactView ? (
             <CompactBudgetView items={budget.items} />
           ) : (
-            <BudgetTable items={budget.items} editable onUpdate={budget.updateItem} onDelete={budget.deleteItem} />
+            <BudgetTable items={budget.items} editable onUpdate={budget.updateItem} onDelete={budget.deleteItem} onDeleteGroup={budget.deleteGroup} />
           )}
         </div>
       </main>

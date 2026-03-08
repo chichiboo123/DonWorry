@@ -70,6 +70,12 @@ export function useBudget() {
     setItems(store.getBudgetData());
   }, [items, pushHistory]);
 
+  const deleteGroup = useCallback((groupName: string) => {
+    pushHistory(items);
+    const newItems = items.filter(item => item.group !== groupName);
+    applyItems(newItems);
+  }, [items, pushHistory, applyItems]);
+
   const undo = useCallback(() => {
     if (historyRef.current.length === 0) return;
     const prev = historyRef.current.pop()!;
@@ -111,5 +117,5 @@ export function useBudget() {
   });
   summary.categoryBreakdown = Array.from(catMap.entries()).map(([name, data]) => ({ name, ...data }));
 
-  return { items, theme, setTheme, loadItems, addItem, updateItem, deleteItem, summary, undo, redo, canUndo, canRedo };
+  return { items, theme, setTheme, loadItems, addItem, updateItem, deleteItem, deleteGroup, summary, undo, redo, canUndo, canRedo };
 }
