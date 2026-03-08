@@ -73,6 +73,11 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
   const [newGroupName, setNewGroupName] = useState('');
   const [ungroupItem, setUngroupItem] = useState<BudgetItem | null>(null);
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
   const groupedItems = useMemo(() => {
     const groups = new Map<string, BudgetItem[]>();
     const ungrouped: BudgetItem[] = [];
