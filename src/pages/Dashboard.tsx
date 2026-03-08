@@ -8,7 +8,7 @@ import { useBudget } from '@/hooks/use-budget';
 import { isSetupDone, clearSetup } from '@/lib/budget-store';
 import SetupPage from './SetupPage';
 import { useState } from 'react';
-import { LayoutGrid, Table as TableIcon, RotateCcw, RefreshCw, Globe, HardDrive, Loader2 } from 'lucide-react';
+import { LayoutGrid, Table as TableIcon, RotateCcw, RefreshCw, Globe, HardDrive, Loader2, Upload } from 'lucide-react';
 import { DataMode } from '@/lib/google-apps-script';
 
 export default function Dashboard() {
