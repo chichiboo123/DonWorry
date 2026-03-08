@@ -37,36 +37,54 @@ export default function ManagePage() {
             <h1 className="text-lg sm:text-xl font-bold text-foreground">예산 관리</h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">데이터를 업로드하거나 항목을 추가/수정하세요</p>
           </div>
-          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-            <Dialog open={importOpen} onOpenChange={setImportOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-1 text-xs sm:text-sm h-8">
-                  <Upload className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                  <span>데이터 불러오기</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-lg">
-                <DialogHeader>
-                  <DialogTitle>데이터 불러오기</DialogTitle>
-                </DialogHeader>
-                <FileUploader onDataLoaded={(items) => { budget.loadItems(items); setImportOpen(false); }} />
-              </DialogContent>
-            </Dialog>
-            <Button variant="outline" size="sm" onClick={budget.undo} disabled={!budget.canUndo} className="gap-1 text-xs sm:text-sm h-8" title="되돌리기">
-              <Undo2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              <span className="hidden sm:inline">되돌리기</span>
-            </Button>
-            <Button variant="outline" size="sm" onClick={budget.redo} disabled={!budget.canRedo} className="gap-1 text-xs sm:text-sm h-8" title="다시 실행">
-              <Redo2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              <span className="hidden sm:inline">다시 실행</span>
-            </Button>
-            {budget.items.length > 0 && (
-              <Button variant="outline" size="sm" onClick={handleClearAll} className="gap-1 text-destructive hover:text-destructive text-xs sm:text-sm h-8">
-                <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                <span className="hidden sm:inline">전체 삭제</span>
-              </Button>
-            )}
-          </div>
+          <TooltipProvider delayDuration={300}>
+            <div className="flex items-center gap-1">
+              <Dialog open={importOpen} onOpenChange={setImportOpen}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
+                        <FolderUp className="w-4 h-4" />
+                      </Button>
+                    </DialogTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>데이터 불러오기</TooltipContent>
+                </Tooltip>
+                <DialogContent className="sm:max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>데이터 불러오기</DialogTitle>
+                  </DialogHeader>
+                  <FileUploader onDataLoaded={(items) => { budget.loadItems(items); setImportOpen(false); }} />
+                </DialogContent>
+              </Dialog>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" onClick={budget.undo} disabled={!budget.canUndo} className="h-9 w-9 rounded-full">
+                    <Undo2 className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>되돌리기</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" onClick={budget.redo} disabled={!budget.canRedo} className="h-9 w-9 rounded-full">
+                    <Redo2 className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>다시 실행</TooltipContent>
+              </Tooltip>
+              {budget.items.length > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={handleClearAll} className="h-9 w-9 rounded-full text-destructive hover:text-destructive">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>전체 삭제</TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          </TooltipProvider>
         </div>
 
         <AddBudgetForm onAdd={budget.addItem} existingGroups={existingGroups} />
