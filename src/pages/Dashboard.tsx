@@ -20,6 +20,7 @@ export default function Dashboard() {
   const [compactView, setCompactView] = useState(false);
   const [showOnlineConnect, setShowOnlineConnect] = useState(false);
   const [scriptUrlInput, setScriptUrlInput] = useState(getScriptUrl());
+  const [showSyncMenu, setShowSyncMenu] = useState(false);
 
   if (!setupDone) {
     return (
