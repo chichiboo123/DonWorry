@@ -16,14 +16,54 @@ export function useBudget() {
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
 
+  // 초기 로드: 로컬 데이터 + 온라인이면 자동 fetch
   useEffect(() => {
     const data = store.getBudgetData();
     setItems(data);
     setThemeState(store.getTheme());
-    setDataModeState(gas.getDataMode());
+    const mode = gas.getDataMode();
+    setDataModeState(mode);
     historyRef.current = [];
     futureRef.current = [];
+
+    // 온라인 모드면 시작 시 자동으로 최신 데이터 가져오기
+    if (mode === 'online') {
+      const scriptUrl = gas.getScriptUrl();
+      if (scriptUrl) {
+        setSyncing(true);
+        gas.fetchOnlineData(scriptUrl)
+          .then(onlineItems => {
+            if (onlineItems.length > 0) {
+              store.saveBudgetData(onlineItems);
+              setItems(onlineItems);
+            }
+          })
+          .catch(err => console.error('초기 온라인 동기화 실패:', err))
+          .finally(() => setSyncing(false));
+      }
+    }
   }, []);
+
+  // 온라인 모드: 60초마다 자동 새로고침
+  useEffect(() => {
+    if (dataMode !== 'online') return;
+    const scriptUrl = gas.getScriptUrl();
+    if (!scriptUrl) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const onlineItems = await gas.fetchOnlineData(scriptUrl);
+        if (onlineItems.length > 0) {
+          store.saveBudgetData(onlineItems);
+          setItems(onlineItems);
+        }
+      } catch (err) {
+        console.error('자동 동기화 실패:', err);
+      }
+    }, 60000); // 60초
+
+    return () => clearInterval(interval);
+  }, [dataMode]);
 
   const pushHistory = useCallback((currentItems: BudgetItem[]) => {
     historyRef.current = [...historyRef.current.slice(-MAX_HISTORY), currentItems];
