@@ -113,7 +113,7 @@ export default function Dashboard() {
                     className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-foreground hover:bg-muted/50 transition-colors disabled:opacity-50"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    스프레드시트에서 다운로드
+                    구글시트 다운로드
                   </button>
                 </div>
               )}
