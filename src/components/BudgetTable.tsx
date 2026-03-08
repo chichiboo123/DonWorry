@@ -511,7 +511,7 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
                   </Table>
                 </div>
                 {/* Mobile cards */}
-                <div className="md:hidden" style={{ backgroundColor: `hsl(${color.bg} / 0.3)` }}>
+                <div className="md:hidden">
                   {groupItems.map(renderMobileCard)}
                 </div>
               </>
