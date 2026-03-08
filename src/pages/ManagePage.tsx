@@ -5,7 +5,7 @@ import AddBudgetForm from '@/components/AddBudgetForm';
 import BudgetTable from '@/components/BudgetTable';
 import { useBudget } from '@/hooks/use-budget';
 import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Undo2, Redo2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ManagePage() {
@@ -33,11 +33,33 @@ export default function ManagePage() {
             <h1 className="text-3xl font-bold text-foreground">예산 관리</h1>
             <p className="text-sm text-muted-foreground mt-1">데이터를 업로드하거나 항목을 추가/수정하세요</p>
           </div>
-          {budget.items.length > 0 && (
-            <Button variant="outline" size="sm" onClick={handleClearAll} className="gap-1 text-destructive hover:text-destructive">
-              <Trash2 className="w-3.5 h-3.5" /> 전체 삭제
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={budget.undo}
+              disabled={!budget.canUndo}
+              className="gap-1"
+              title="되돌리기 (Ctrl+Z)"
+            >
+              <Undo2 className="w-3.5 h-3.5" /> 되돌리기
             </Button>
-          )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={budget.redo}
+              disabled={!budget.canRedo}
+              className="gap-1"
+              title="다시 실행 (Ctrl+Y)"
+            >
+              <Redo2 className="w-3.5 h-3.5" /> 다시 실행
+            </Button>
+            {budget.items.length > 0 && (
+              <Button variant="outline" size="sm" onClick={handleClearAll} className="gap-1 text-destructive hover:text-destructive">
+                <Trash2 className="w-3.5 h-3.5" /> 전체 삭제
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
