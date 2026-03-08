@@ -12,6 +12,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 function formatKRW(n: number) {
   return n.toLocaleString('ko-KR');
@@ -43,6 +53,7 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [assigningGroupId, setAssigningGroupId] = useState<string | null>(null);
   const [newGroupName, setNewGroupName] = useState('');
+  const [ungroupItem, setUngroupItem] = useState<BudgetItem | null>(null);
 
   const groupedItems = useMemo(() => {
     const groups = new Map<string, BudgetItem[]>();
@@ -154,9 +165,17 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
     }
   };
 
+
   const handleRemoveFromGroup = (item: BudgetItem) => {
-    onUpdate?.(item.id, { group: '', subCategory: '' });
-    toast.success('그룹에서 해제되었습니다.');
+    setUngroupItem(item);
+  };
+
+  const confirmRemoveFromGroup = () => {
+    if (ungroupItem) {
+      onUpdate?.(ungroupItem.id, { group: '', subCategory: '' });
+      toast.success('그룹에서 해제되었습니다.');
+      setUngroupItem(null);
+    }
   };
 
   const handleAssignGroup = (item: BudgetItem, groupName: string) => {
@@ -453,6 +472,7 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
   );
 
   return (
+    <>
     <div className="space-y-4">
       {/* Grouped items */}
       {Array.from(groupedItems.groups.entries()).map(([groupName, groupItems]) => {
@@ -544,5 +564,21 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
         </div>
       )}
     </div>
+
+      <AlertDialog open={!!ungroupItem} onOpenChange={(open) => !open && setUngroupItem(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>그룹 해제</AlertDialogTitle>
+            <AlertDialogDescription>
+              '{ungroupItem?.description}' 항목을 그룹에서 해제하시겠습니까?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemoveFromGroup}>해제</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
