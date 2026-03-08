@@ -8,7 +8,8 @@ import { useBudget } from '@/hooks/use-budget';
 import { isSetupDone, clearSetup } from '@/lib/budget-store';
 import SetupPage from './SetupPage';
 import { useState } from 'react';
-import { LayoutGrid, Table as TableIcon, RotateCcw } from 'lucide-react';
+import { LayoutGrid, Table as TableIcon, RotateCcw, RefreshCw, Globe, HardDrive, Loader2 } from 'lucide-react';
+import { DataMode } from '@/lib/google-apps-script';
 
 export default function Dashboard() {
   const budget = useBudget();
@@ -18,7 +19,8 @@ export default function Dashboard() {
   if (!setupDone) {
     return (
       <SetupPage
-        onComplete={(items) => {
+        onComplete={(items, mode) => {
+          if (mode) budget.setDataMode(mode);
           budget.loadItems(items);
           setSetupDone(true);
         }}
@@ -30,6 +32,34 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background flex flex-col">
       <AppHeader theme={budget.theme} onThemeChange={budget.setTheme} />
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6 flex-1">
+        {/* 모드 표시 */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            {budget.dataMode === 'online' ? (
+              <>
+                <Globe className="w-3.5 h-3.5 text-green-500" />
+                <span>온라인 모드</span>
+                {budget.syncing && <Loader2 className="w-3 h-3 animate-spin" />}
+              </>
+            ) : (
+              <>
+                <HardDrive className="w-3.5 h-3.5" />
+                <span>로컬 모드</span>
+              </>
+            )}
+          </div>
+          {budget.dataMode === 'online' && (
+            <button
+              onClick={budget.refreshFromOnline}
+              disabled={budget.syncing}
+              className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${budget.syncing ? 'animate-spin' : ''}`} />
+              새로고침
+            </button>
+          )}
+        </div>
+
         {/* Summary cards + Pie chart in one row */}
         <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
           <div className="lg:w-1/3 flex flex-col gap-3 sm:gap-4">
