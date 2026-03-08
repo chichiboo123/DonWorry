@@ -164,9 +164,19 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
     }
   };
 
+  const [ungroupItem, setUngroupItem] = useState<BudgetItem | null>(null);
+
   const handleRemoveFromGroup = (item: BudgetItem) => {
-    onUpdate?.(item.id, { group: '', subCategory: '' });
-    toast.success('그룹에서 해제되었습니다.');
+    setUngroupItem(item);
+  };
+
+  const confirmRemoveFromGroup = () => {
+    if (ungroupItem) {
+      onUpdate?.(ungroupItem.id, { group: '', subCategory: '' });
+      toast.success('그룹에서 해제되었습니다.');
+      setUngroupItem(null);
+    }
+  };
   };
 
   const handleAssignGroup = (item: BudgetItem, groupName: string) => {
