@@ -59,6 +59,7 @@ interface EditForm {
   description: string;
   budgetAmount: string;
   executedAmount: string;
+  memo: string;
 }
 
 export default function BudgetTable({ items, editable = false, onUpdate, onDelete, onDeleteGroup, onReorder }: Props) {
