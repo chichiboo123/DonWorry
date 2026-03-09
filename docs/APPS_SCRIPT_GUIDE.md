@@ -99,7 +99,7 @@ function readData() {
 
 function saveData(items) {
   var sheet = getSheet();
-  var headers = ['id', 'group', 'category', 'subCategory', 'costType', 'description', 'budgetAmount', 'executedAmount', 'executionRate', 'remainingAmount', 'settlementFund'];
+  var headers = ['id', 'group', 'category', 'subCategory', 'costType', 'description', 'budgetAmount', 'executedAmount', 'executionRate', 'remainingAmount', 'settlementFund', 'memo'];
   
   // 기존 데이터 삭제 (헤더 유지)
   if (sheet.getLastRow() > 1) {
