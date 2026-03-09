@@ -116,9 +116,11 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
       description: item.description,
       budgetAmount: String(item.budgetAmount),
       executedAmount: String(item.executedAmount),
+      memo: item.memo || '',
     });
     setAddingId(null);
     setAssigningGroupId(null);
+    setEditingMemoId(null);
   };
 
   const saveEdit = (item: BudgetItem) => {
