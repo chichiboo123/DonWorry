@@ -3,7 +3,7 @@ import { BudgetItem, GROUP_COLORS } from '@/lib/budget-types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Trash2, Pencil, Check, X, ChevronDown, ChevronRight, Ungroup, FolderPlus, GripVertical } from 'lucide-react';
+import { Trash2, Pencil, Check, X, ChevronDown, ChevronRight, Ungroup, FolderPlus, GripVertical, StickyNote } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Select,
