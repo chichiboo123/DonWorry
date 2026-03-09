@@ -10,6 +10,7 @@ export interface BudgetItem {
   executionRate: number;    // 집행률
   remainingAmount: number;  // 예산잔액
   settlementFund: number;   // 정산재원
+  memo: string;             // 메모
 }
 
 export interface BudgetSummary {

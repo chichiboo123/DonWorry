@@ -3,7 +3,7 @@ import { BudgetItem, GROUP_COLORS } from '@/lib/budget-types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Trash2, Pencil, Check, X, ChevronDown, ChevronRight, Ungroup, FolderPlus, GripVertical } from 'lucide-react';
+import { Trash2, Pencil, Check, X, ChevronDown, ChevronRight, Ungroup, FolderPlus, GripVertical, StickyNote } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Select,
@@ -59,11 +59,14 @@ interface EditForm {
   description: string;
   budgetAmount: string;
   executedAmount: string;
+  memo: string;
 }
 
 export default function BudgetTable({ items, editable = false, onUpdate, onDelete, onDeleteGroup, onReorder }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<EditForm>({ category: '', costType: '', description: '', budgetAmount: '', executedAmount: '' });
+  const [editForm, setEditForm] = useState<EditForm>({ category: '', costType: '', description: '', budgetAmount: '', executedAmount: '', memo: '' });
+  const [editingMemoId, setEditingMemoId] = useState<string | null>(null);
+  const [memoValue, setMemoValue] = useState('');
   const [addingId, setAddingId] = useState<string | null>(null);
   const [addAmount, setAddAmount] = useState('');
   const [directEditId, setDirectEditId] = useState<string | null>(null);
@@ -113,9 +116,11 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
       description: item.description,
       budgetAmount: String(item.budgetAmount),
       executedAmount: String(item.executedAmount),
+      memo: item.memo || '',
     });
     setAddingId(null);
     setAssigningGroupId(null);
+    setEditingMemoId(null);
   };
 
   const saveEdit = (item: BudgetItem) => {
@@ -133,6 +138,7 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
       executedAmount: executed,
       remainingAmount: remaining,
       executionRate: rate,
+      memo: editForm.memo,
     });
     setEditingId(null);
     toast.success('항목이 수정되었습니다.');
@@ -144,6 +150,22 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
     setEditingId(null);
     setAssigningGroupId(null);
     setDirectEditId(null);
+    setEditingMemoId(null);
+  };
+
+  const startEditMemo = (item: BudgetItem) => {
+    setEditingMemoId(item.id);
+    setMemoValue(item.memo || '');
+    setEditingId(null);
+    setAddingId(null);
+    setDirectEditId(null);
+    setAssigningGroupId(null);
+  };
+
+  const saveMemo = (item: BudgetItem) => {
+    onUpdate?.(item.id, { memo: memoValue });
+    setEditingMemoId(null);
+    toast.success('메모가 저장되었습니다.');
   };
 
   const startDirectEditExecution = (item: BudgetItem) => {
@@ -387,6 +409,28 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
             </span>
           </span>
         </div>
+        {/* Memo display/edit */}
+        {editingMemoId === item.id ? (
+          <div className="mt-2 flex items-center gap-1">
+            <Input className="h-6 text-xs flex-1" placeholder="메모 입력..." value={memoValue} onChange={e => setMemoValue(e.target.value)} onKeyDown={e => e.key === 'Enter' && saveMemo(item)} autoFocus />
+            <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => saveMemo(item)}><Check className="w-3 h-3 text-primary" /></Button>
+            <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => setEditingMemoId(null)}><X className="w-3 h-3" /></Button>
+          </div>
+        ) : (
+          <div className="mt-1.5">
+            {item.memo ? (
+              <button onClick={() => editable && startEditMemo(item)} className={`flex items-center gap-1 text-[11px] text-muted-foreground ${editable ? 'hover:text-foreground cursor-pointer' : ''}`}>
+                <StickyNote className="w-3 h-3 shrink-0" />
+                <span className="truncate">{item.memo}</span>
+              </button>
+            ) : editable ? (
+              <button onClick={() => startEditMemo(item)} className="flex items-center gap-1 text-[11px] text-muted-foreground/50 hover:text-muted-foreground">
+                <StickyNote className="w-3 h-3" />
+                <span>메모 추가</span>
+              </button>
+            ) : null}
+          </div>
+        )}
         {assigningGroupId === item.id && (
           <div className="mt-2 flex flex-col gap-2 p-2 bg-primary/5 rounded-lg">
             <span className="text-xs font-medium">그룹 지정</span>
@@ -416,6 +460,7 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
             <Input className="h-7 text-xs" placeholder="비목" value={editForm.costType} onChange={e => setEditForm(f => ({ ...f, costType: e.target.value }))} />
             <Input className="h-7 text-xs" placeholder="예산현액" value={editForm.budgetAmount} onChange={e => setEditForm(f => ({ ...f, budgetAmount: e.target.value }))} />
             <Input className="h-7 text-xs" placeholder="집행액" value={editForm.executedAmount} onChange={e => setEditForm(f => ({ ...f, executedAmount: e.target.value }))} />
+            <Input className="h-7 text-xs col-span-2" placeholder="메모 (선택사항)" value={editForm.memo} onChange={e => setEditForm(f => ({ ...f, memo: e.target.value }))} />
             <div className="col-span-2 flex gap-1 justify-end">
               <Button size="sm" className="h-7 text-xs" onClick={() => saveEdit(item)}>저장</Button>
               <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditingId(null)}>취소</Button>
@@ -438,7 +483,10 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
           {hasDrag && <TableCell />}
           <TableCell><Input className="h-7 text-sm" value={editForm.category} onChange={e => setEditForm(f => ({ ...f, category: e.target.value }))} /></TableCell>
           <TableCell><Input className="h-7 text-sm" value={editForm.costType} onChange={e => setEditForm(f => ({ ...f, costType: e.target.value }))} /></TableCell>
-          <TableCell><Input className="h-7 text-sm" value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} /></TableCell>
+          <TableCell>
+            <Input className="h-7 text-sm" value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} />
+            <Input className="h-6 text-xs mt-1" placeholder="메모 (선택사항)" value={editForm.memo} onChange={e => setEditForm(f => ({ ...f, memo: e.target.value }))} />
+          </TableCell>
           <TableCell><Input className="h-7 text-sm text-right" value={editForm.budgetAmount} onChange={e => setEditForm(f => ({ ...f, budgetAmount: e.target.value }))} /></TableCell>
           <TableCell><Input className="h-7 text-sm text-right" value={editForm.executedAmount} onChange={e => setEditForm(f => ({ ...f, executedAmount: e.target.value }))} /></TableCell>
           <TableCell className="text-right text-sm text-muted-foreground">자동</TableCell>
@@ -493,7 +541,26 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
         ) : hasDrag ? <TableCell /> : null}
         <TableCell className="text-sm">{item.category}</TableCell>
         <TableCell className="text-sm">{item.costType}</TableCell>
-        <TableCell className="text-sm">{item.description}</TableCell>
+        <TableCell className="text-sm">
+          <div>{item.description}</div>
+          {editingMemoId === item.id ? (
+            <div className="flex items-center gap-1 mt-1">
+              <Input className="h-6 text-xs flex-1" placeholder="메모 입력..." value={memoValue} onChange={e => setMemoValue(e.target.value)} onKeyDown={e => e.key === 'Enter' && saveMemo(item)} autoFocus />
+              <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => saveMemo(item)}><Check className="w-3 h-3 text-primary" /></Button>
+              <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => setEditingMemoId(null)}><X className="w-3 h-3" /></Button>
+            </div>
+          ) : item.memo ? (
+            <button onClick={() => editable && startEditMemo(item)} className={`flex items-center gap-1 mt-0.5 text-[11px] text-muted-foreground ${editable ? 'hover:text-foreground cursor-pointer' : ''}`}>
+              <StickyNote className="w-3 h-3 shrink-0" />
+              <span className="truncate max-w-[200px]">{item.memo}</span>
+            </button>
+          ) : editable ? (
+            <button onClick={() => startEditMemo(item)} className="flex items-center gap-1 mt-0.5 text-[11px] text-muted-foreground/40 hover:text-muted-foreground">
+              <StickyNote className="w-3 h-3" />
+              <span>메모</span>
+            </button>
+          ) : null}
+        </TableCell>
         <TableCell className="text-right text-sm font-medium">{formatKRW(item.budgetAmount)}</TableCell>
         <TableCell className="text-right text-sm">
           {isAdding ? (

@@ -4,9 +4,9 @@
 
 새 구글 스프레드시트를 만들고, 첫 번째 시트(Sheet1)의 **1행에 헤더**를 입력하세요:
 
-| A | B | C | D | E | F | G | H | I | J | K |
-|---|---|---|---|---|---|---|---|---|---|---|
-| id | group | category | subCategory | costType | description | budgetAmount | executedAmount | executionRate | remainingAmount | settlementFund |
+| A | B | C | D | E | F | G | H | I | J | K | L |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| id | group | category | subCategory | costType | description | budgetAmount | executedAmount | executionRate | remainingAmount | settlementFund | memo |
 
 ## 2단계: Apps Script 코드 배포
 
@@ -86,13 +86,20 @@ function readData() {
     }
     items.push(obj);
   }
+        obj[h] = Number(data[i][j]) || 0;
+      } else {
+        obj[h] = String(data[i][j] || '');
+      }
+    }
+    items.push(obj);
+  }
   
   return jsonResponse({ items: items });
 }
 
 function saveData(items) {
   var sheet = getSheet();
-  var headers = ['id', 'group', 'category', 'subCategory', 'costType', 'description', 'budgetAmount', 'executedAmount', 'executionRate', 'remainingAmount', 'settlementFund'];
+  var headers = ['id', 'group', 'category', 'subCategory', 'costType', 'description', 'budgetAmount', 'executedAmount', 'executionRate', 'remainingAmount', 'settlementFund', 'memo'];
   
   // 기존 데이터 삭제 (헤더 유지)
   if (sheet.getLastRow() > 1) {

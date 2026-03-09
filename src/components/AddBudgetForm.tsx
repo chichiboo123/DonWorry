@@ -13,7 +13,7 @@ interface Props {
 export default function AddBudgetForm({ onAdd, existingGroups = [] }: Props) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
-    group: '', category: '', costType: '', description: '', budgetAmount: '', executedAmount: '',
+    group: '', category: '', costType: '', description: '', budgetAmount: '', executedAmount: '', memo: '',
   });
 
   const budgetNum = Number((form.budgetAmount || '0').replace(/,/g, ''));
@@ -47,8 +47,9 @@ export default function AddBudgetForm({ onAdd, existingGroups = [] }: Props) {
       executionRate: rate,
       remainingAmount: remainingAmount,
       settlementFund: 0,
+      memo: form.memo,
     });
-    setForm({ group: '', category: '', costType: '', description: '', budgetAmount: '', executedAmount: '' });
+    setForm({ group: '', category: '', costType: '', description: '', budgetAmount: '', executedAmount: '', memo: '' });
     setOpen(false);
     toast.success('항목이 추가되었습니다.');
   };
@@ -83,6 +84,7 @@ export default function AddBudgetForm({ onAdd, existingGroups = [] }: Props) {
         <Input placeholder="산출내역 *" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="sm:col-span-2" />
         <Input placeholder="예산현액 *" value={form.budgetAmount} onChange={e => setForm(f => ({ ...f, budgetAmount: e.target.value }))} />
         <Input placeholder="집행액 (기본 0)" value={form.executedAmount} onChange={e => setForm(f => ({ ...f, executedAmount: e.target.value }))} />
+        <Input placeholder="메모 (선택사항)" value={form.memo} onChange={e => setForm(f => ({ ...f, memo: e.target.value }))} className="sm:col-span-2" />
       </div>
       <div className="text-sm text-muted-foreground">
         예산 잔액 (자동 계산): <span className="font-medium text-foreground">{remainingAmount.toLocaleString('ko-KR')}원</span>
