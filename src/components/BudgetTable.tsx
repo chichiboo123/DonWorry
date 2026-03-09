@@ -460,6 +460,7 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
             <Input className="h-7 text-xs" placeholder="비목" value={editForm.costType} onChange={e => setEditForm(f => ({ ...f, costType: e.target.value }))} />
             <Input className="h-7 text-xs" placeholder="예산현액" value={editForm.budgetAmount} onChange={e => setEditForm(f => ({ ...f, budgetAmount: e.target.value }))} />
             <Input className="h-7 text-xs" placeholder="집행액" value={editForm.executedAmount} onChange={e => setEditForm(f => ({ ...f, executedAmount: e.target.value }))} />
+            <Input className="h-7 text-xs col-span-2" placeholder="메모 (선택사항)" value={editForm.memo} onChange={e => setEditForm(f => ({ ...f, memo: e.target.value }))} />
             <div className="col-span-2 flex gap-1 justify-end">
               <Button size="sm" className="h-7 text-xs" onClick={() => saveEdit(item)}>저장</Button>
               <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditingId(null)}>취소</Button>
