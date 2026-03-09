@@ -489,6 +489,7 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
           <TableCell><Input className="h-7 text-sm text-right" value={editForm.executedAmount} onChange={e => setEditForm(f => ({ ...f, executedAmount: e.target.value }))} /></TableCell>
           <TableCell className="text-right text-sm text-muted-foreground">자동</TableCell>
           <TableCell className="text-right text-sm text-muted-foreground">자동</TableCell>
+          <TableCell className="text-right text-sm text-muted-foreground">자동</TableCell>
           <TableCell>
             <div className="flex gap-1 justify-end">
               <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => saveEdit(item)}><Check className="w-3.5 h-3.5 text-primary" /></Button>
