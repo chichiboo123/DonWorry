@@ -539,25 +539,27 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
         ) : hasDrag ? <TableCell /> : null}
         <TableCell className="text-sm">{item.category}</TableCell>
         <TableCell className="text-sm">{item.costType}</TableCell>
-        <TableCell className="text-sm">
-          <div>{item.description}</div>
+        <TableCell className="text-sm">{item.description}</TableCell>
+        <TableCell className="text-sm min-w-[150px]">
           {editingMemoId === item.id ? (
-            <div className="flex items-center gap-1 mt-1">
-              <Input className="h-6 text-xs flex-1" placeholder="메모 입력..." value={memoValue} onChange={e => setMemoValue(e.target.value)} onKeyDown={e => e.key === 'Enter' && saveMemo(item)} autoFocus />
-              <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => saveMemo(item)}><Check className="w-3 h-3 text-primary" /></Button>
-              <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => setEditingMemoId(null)}><X className="w-3 h-3" /></Button>
+            <div className="flex items-center gap-1">
+              <Input className="h-7 text-xs flex-1" placeholder="메모 입력..." value={memoValue} onChange={e => setMemoValue(e.target.value)} onKeyDown={e => e.key === 'Enter' && saveMemo(item)} autoFocus />
+              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => saveMemo(item)}><Check className="w-3 h-3 text-primary" /></Button>
+              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setEditingMemoId(null)}><X className="w-3 h-3" /></Button>
             </div>
           ) : item.memo ? (
-            <button onClick={() => editable && startEditMemo(item)} className={`flex items-center gap-1 mt-0.5 text-[11px] text-muted-foreground ${editable ? 'hover:text-foreground cursor-pointer' : ''}`}>
+            <button onClick={() => editable && startEditMemo(item)} className={`flex items-center gap-1 text-xs text-muted-foreground ${editable ? 'hover:text-foreground cursor-pointer' : ''}`}>
               <StickyNote className="w-3 h-3 shrink-0" />
-              <span className="truncate max-w-[200px]">{item.memo}</span>
+              <span className="truncate">{item.memo}</span>
             </button>
           ) : editable ? (
-            <button onClick={() => startEditMemo(item)} className="flex items-center gap-1 mt-0.5 text-[11px] text-muted-foreground/40 hover:text-muted-foreground">
+            <button onClick={() => startEditMemo(item)} className="flex items-center gap-1 text-xs text-muted-foreground/40 hover:text-muted-foreground">
               <StickyNote className="w-3 h-3" />
               <span>메모</span>
             </button>
-          ) : null}
+          ) : (
+            <span className="text-xs text-muted-foreground">-</span>
+          )}
         </TableCell>
         <TableCell className="text-right text-sm font-medium">{formatKRW(item.budgetAmount)}</TableCell>
         <TableCell className="text-right text-sm">
