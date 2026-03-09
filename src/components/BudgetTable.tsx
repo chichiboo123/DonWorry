@@ -150,6 +150,22 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
     setEditingId(null);
     setAssigningGroupId(null);
     setDirectEditId(null);
+    setEditingMemoId(null);
+  };
+
+  const startEditMemo = (item: BudgetItem) => {
+    setEditingMemoId(item.id);
+    setMemoValue(item.memo || '');
+    setEditingId(null);
+    setAddingId(null);
+    setDirectEditId(null);
+    setAssigningGroupId(null);
+  };
+
+  const saveMemo = (item: BudgetItem) => {
+    onUpdate?.(item.id, { memo: memoValue });
+    setEditingMemoId(null);
+    toast.success('메모가 저장되었습니다.');
   };
 
   const startDirectEditExecution = (item: BudgetItem) => {
