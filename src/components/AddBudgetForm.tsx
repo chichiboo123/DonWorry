@@ -13,7 +13,7 @@ interface Props {
 export default function AddBudgetForm({ onAdd, existingGroups = [] }: Props) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
-    group: '', category: '', costType: '', description: '', budgetAmount: '', executedAmount: '',
+    group: '', category: '', costType: '', description: '', budgetAmount: '', executedAmount: '', memo: '',
   });
 
   const budgetNum = Number((form.budgetAmount || '0').replace(/,/g, ''));
