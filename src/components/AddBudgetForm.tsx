@@ -47,8 +47,9 @@ export default function AddBudgetForm({ onAdd, existingGroups = [] }: Props) {
       executionRate: rate,
       remainingAmount: remainingAmount,
       settlementFund: 0,
+      memo: form.memo,
     });
-    setForm({ group: '', category: '', costType: '', description: '', budgetAmount: '', executedAmount: '' });
+    setForm({ group: '', category: '', costType: '', description: '', budgetAmount: '', executedAmount: '', memo: '' });
     setOpen(false);
     toast.success('항목이 추가되었습니다.');
   };
