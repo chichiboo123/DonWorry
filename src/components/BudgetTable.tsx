@@ -627,6 +627,7 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
         <TableHead className="font-semibold text-foreground">세부사업</TableHead>
         <TableHead className="font-semibold text-foreground">비목</TableHead>
         <TableHead className="font-semibold text-foreground">산출내역</TableHead>
+        <TableHead className="font-semibold text-foreground">메모</TableHead>
         <TableHead className="text-right font-semibold text-foreground">예산현액</TableHead>
         <TableHead className="text-right font-semibold text-foreground">집행액</TableHead>
         <TableHead className="text-right font-semibold text-foreground">집행률</TableHead>
