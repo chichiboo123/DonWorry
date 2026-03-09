@@ -81,6 +81,7 @@ function parseRows(rows: string[][]): BudgetItem[] {
         executionRate: execRate,
         remainingAmount: remainingAmt,
         settlementFund: settlementFund,
+        memo: String(row[7] || '').trim(),
       });
     }
   }
