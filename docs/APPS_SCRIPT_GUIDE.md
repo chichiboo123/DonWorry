@@ -86,6 +86,13 @@ function readData() {
     }
     items.push(obj);
   }
+        obj[h] = Number(data[i][j]) || 0;
+      } else {
+        obj[h] = String(data[i][j] || '');
+      }
+    }
+    items.push(obj);
+  }
   
   return jsonResponse({ items: items });
 }
