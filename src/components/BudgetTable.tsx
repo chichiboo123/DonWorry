@@ -409,6 +409,28 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
             </span>
           </span>
         </div>
+        {/* Memo display/edit */}
+        {editingMemoId === item.id ? (
+          <div className="mt-2 flex items-center gap-1">
+            <Input className="h-6 text-xs flex-1" placeholder="메모 입력..." value={memoValue} onChange={e => setMemoValue(e.target.value)} onKeyDown={e => e.key === 'Enter' && saveMemo(item)} autoFocus />
+            <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => saveMemo(item)}><Check className="w-3 h-3 text-primary" /></Button>
+            <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => setEditingMemoId(null)}><X className="w-3 h-3" /></Button>
+          </div>
+        ) : (
+          <div className="mt-1.5">
+            {item.memo ? (
+              <button onClick={() => editable && startEditMemo(item)} className={`flex items-center gap-1 text-[11px] text-muted-foreground ${editable ? 'hover:text-foreground cursor-pointer' : ''}`}>
+                <StickyNote className="w-3 h-3 shrink-0" />
+                <span className="truncate">{item.memo}</span>
+              </button>
+            ) : editable ? (
+              <button onClick={() => startEditMemo(item)} className="flex items-center gap-1 text-[11px] text-muted-foreground/50 hover:text-muted-foreground">
+                <StickyNote className="w-3 h-3" />
+                <span>메모 추가</span>
+              </button>
+            ) : null}
+          </div>
+        )}
         {assigningGroupId === item.id && (
           <div className="mt-2 flex flex-col gap-2 p-2 bg-primary/5 rounded-lg">
             <span className="text-xs font-medium">그룹 지정</span>
