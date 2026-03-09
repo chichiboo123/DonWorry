@@ -503,7 +503,7 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
       return (
         <>
           {hasDrag && <TableCell />}
-          <TableCell colSpan={7}>
+          <TableCell colSpan={8}>
             <div className="flex items-center gap-3 py-1 flex-wrap">
               <span className="text-sm font-medium text-foreground whitespace-nowrap">"{item.description}" 그룹 지정:</span>
               {groupNames.length > 0 && (
