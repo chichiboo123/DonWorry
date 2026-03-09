@@ -64,7 +64,9 @@ interface EditForm {
 
 export default function BudgetTable({ items, editable = false, onUpdate, onDelete, onDeleteGroup, onReorder }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<EditForm>({ category: '', costType: '', description: '', budgetAmount: '', executedAmount: '' });
+  const [editForm, setEditForm] = useState<EditForm>({ category: '', costType: '', description: '', budgetAmount: '', executedAmount: '', memo: '' });
+  const [editingMemoId, setEditingMemoId] = useState<string | null>(null);
+  const [memoValue, setMemoValue] = useState('');
   const [addingId, setAddingId] = useState<string | null>(null);
   const [addAmount, setAddAmount] = useState('');
   const [directEditId, setDirectEditId] = useState<string | null>(null);
