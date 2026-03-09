@@ -138,6 +138,7 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
       executedAmount: executed,
       remainingAmount: remaining,
       executionRate: rate,
+      memo: editForm.memo,
     });
     setEditingId(null);
     toast.success('항목이 수정되었습니다.');
