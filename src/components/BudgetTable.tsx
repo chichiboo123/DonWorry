@@ -483,7 +483,10 @@ export default function BudgetTable({ items, editable = false, onUpdate, onDelet
           {hasDrag && <TableCell />}
           <TableCell><Input className="h-7 text-sm" value={editForm.category} onChange={e => setEditForm(f => ({ ...f, category: e.target.value }))} /></TableCell>
           <TableCell><Input className="h-7 text-sm" value={editForm.costType} onChange={e => setEditForm(f => ({ ...f, costType: e.target.value }))} /></TableCell>
-          <TableCell><Input className="h-7 text-sm" value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} /></TableCell>
+          <TableCell>
+            <Input className="h-7 text-sm" value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} />
+            <Input className="h-6 text-xs mt-1" placeholder="메모 (선택사항)" value={editForm.memo} onChange={e => setEditForm(f => ({ ...f, memo: e.target.value }))} />
+          </TableCell>
           <TableCell><Input className="h-7 text-sm text-right" value={editForm.budgetAmount} onChange={e => setEditForm(f => ({ ...f, budgetAmount: e.target.value }))} /></TableCell>
           <TableCell><Input className="h-7 text-sm text-right" value={editForm.executedAmount} onChange={e => setEditForm(f => ({ ...f, executedAmount: e.target.value }))} /></TableCell>
           <TableCell className="text-right text-sm text-muted-foreground">자동</TableCell>
